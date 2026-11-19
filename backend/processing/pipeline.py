@@ -15,7 +15,7 @@ from django.db.models.functions import Greatest
 
 from issues.models import Environment, Event, Group, GroupHash, Release
 
-from .grouping import event_culprit, event_title, grouping_hash
+from .grouping import event_culprit, event_title, grouping_hash, is_message_event
 from .normalize import normalize
 
 logger = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ def _get_or_create_group(
                 project_id=project_id,
                 title=event_title(data),
                 culprit=event_culprit(data),
-                type="error" if data.get("exception") else "default",
+                type="default" if is_message_event(data) else "error",
                 level=data["level"],
                 platform=data["platform"],
                 first_seen=ts,

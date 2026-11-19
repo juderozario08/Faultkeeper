@@ -64,5 +64,15 @@ services:
     <<: *backend
     command: celery -A faultkeeper worker --beat --schedule /tmp/celerybeat-schedule --loglevel=info --concurrency=2
 
+  buggy-shop-api:
+    build: ./demo/buggy-shop-api
+    environment:
+      # Inside the compose network the API reaches Faultkeeper as `web`.
+      FAULTKEEPER_DSN: http://67043222324838d283f263d0f092cc06@web:8000/2
+    ports:
+      - "5175:5175"
+    depends_on:
+      - web
+
 volumes:
   postgres-data:

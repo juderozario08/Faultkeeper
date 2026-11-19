@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Buggy Shop</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><text y='19' font-size='18'>🛒</text></svg>" />
+  </head>
+  <body>
+    <header class="top">
+      <strong>🛒 Buggy Shop</strong>
+      <span class="hint">A demo store with deliberate bugs, monitored by Faultkeeper</span>
+    </header>
+    <main>
+      <section>
+        <h2>Products</h2>
+        <div id="products" class="grid"></div>
+      </section>
+      <aside>
+        <h2>Cart</h2>
+        <ul id="cart"></ul>
+        <label class="coupon">Coupon <input id="coupon" placeholder="SAVE10, HALF…" /></label>
+        <button id="checkout" class="primary">Checkout</button>
+        <p id="status" role="status"></p>
+        <h2>Break things</h2>
+        <div class="bugs">
+          <button data-bug="null-price">Add a product with no price</button>
+          <button data-bug="promise">Unhandled promise rejection</button>
+          <button data-bug="reviews">Load reviews for “Mouse” (API bug)</button>
+          <button data-bug="coupon">Checkout with coupon “FREE” (API bug)</button>
+          <button data-bug="stock">Checkout an out-of-stock item (API bug)</button>
+          <button data-bug="message">Log a warning message</button>
+        </div>
+      </aside>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

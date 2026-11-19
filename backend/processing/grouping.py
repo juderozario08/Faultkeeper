@@ -59,18 +59,32 @@ def _frame_location(frame: dict[str, Any]) -> str:
     return normalize_filename(str(frame.get("filename") or frame.get("abs_path") or "?"))
 
 
+def is_synthetic(exception: dict[str, Any]) -> bool:
+    """SDK-made exceptions (e.g. JS `captureMessage`) whose type/value carry no meaning."""
+    mechanism = exception.get("mechanism")
+    return isinstance(mechanism, dict) and bool(mechanism.get("synthetic"))
+
+
+def _exceptions(event: dict[str, Any]) -> list[dict[str, Any]]:
+    return (event.get("exception") or {}).get("values") or []
+
+
 def default_components(event: dict[str, Any]) -> list[str]:
-    exceptions = (event.get("exception") or {}).get("values") or []
+    exceptions = _exceptions(event)
     if exceptions:
         components: list[str] = []
         for exc in exceptions:
-            components.append(f"type:{exc.get('type')}")
+            synthetic = is_synthetic(exc)
+            if not synthetic:
+                components.append(f"type:{exc.get('type')}")
             frames = _app_frames(exc)
             if frames:
                 for frame in frames:
                     components.append(
                         f"frame:{_frame_location(frame)}:{frame.get('function') or '?'}"
                     )
+            elif synthetic:
+                components.append(f"message:{normalize_message(message_of(event))}")
             else:
                 components.append(f"value:{normalize_message(str(exc.get('value') or ''))}")
         return components
@@ -100,7 +114,9 @@ def grouping_hash(event: dict[str, Any]) -> str:
 
 
 def event_title(event: dict[str, Any]) -> str:
-    exceptions = (event.get("exception") or {}).get("values") or []
+    exceptions = _exceptions(event)
+    if exceptions and all(is_synthetic(e) for e in exceptions) and message_of(event).strip():
+        exceptions = []  # a message event that only carries a synthetic stack trace
     if exceptions:
         exc = exceptions[-1]  # the outermost / most recently raised
         value = str(exc.get("value") or "").strip()
@@ -110,11 +126,17 @@ def event_title(event: dict[str, Any]) -> str:
     return (title or "<unlabeled event>")[:200]
 
 
+def is_message_event(event: dict[str, Any]) -> bool:
+    exceptions = _exceptions(event)
+    return not exceptions or all(is_synthetic(e) for e in exceptions)
+
+
 def event_culprit(event: dict[str, Any]) -> str:
-    exceptions = (event.get("exception") or {}).get("values") or []
-    for exc in reversed(exceptions):
+    """Most recent in-app frame, preferring one with a real function name."""
+    for exc in reversed(_exceptions(event)):
         frames = _app_frames(exc)
         if frames:
-            frame = frames[-1]  # most recent call
+            named = [f for f in frames if f.get("function") not in (None, "", "?", "<anonymous>")]
+            frame = (named or frames)[-1]  # most recent call
             return f"{_frame_location(frame)} in {frame.get('function') or '?'}"[:255]
     return str(event.get("transaction") or event.get("logger") or "")[:255]

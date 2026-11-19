@@ -149,3 +149,39 @@ def test_title_and_culprit() -> None:
     assert event_culprit(event) == "/src/Cart.tsx in checkout"
     assert event_title({"logentry": {"formatted": "line one\nline two"}}) == "line one"
     assert event_title({}) == "<unlabeled event>"
+
+
+def synthetic_message(text: str, fn: str = "message") -> dict[str, Any]:
+    return {
+        "logentry": {"formatted": text},
+        "exception": {
+            "values": [
+                {
+                    "type": "Error",
+                    "value": text,
+                    "mechanism": {"type": "generic", "synthetic": True},
+                    "stacktrace": {
+                        "frames": [{"filename": "src/main.ts", "function": fn, "in_app": True}]
+                    },
+                }
+            ]
+        },
+    }
+
+
+def test_synthetic_exception_uses_message_title_and_ignores_type() -> None:
+    event = synthetic_message("Inventory sync is lagging")
+    assert event_title(event) == "Inventory sync is lagging"
+    renamed = synthetic_message("Inventory sync is lagging")
+    renamed["exception"]["values"][0]["type"] = "SyntheticError"
+    assert grouping_hash(event) == grouping_hash(renamed)
+
+
+def test_culprit_prefers_named_function() -> None:
+    event = exc_event(
+        frames=[
+            {"filename": "src/main.ts", "function": "cartTotal", "in_app": True},
+            {"filename": "src/main.ts", "function": "<anonymous>", "in_app": True},
+        ]
+    )
+    assert event_culprit(event) == "src/main.ts in cartTotal"
