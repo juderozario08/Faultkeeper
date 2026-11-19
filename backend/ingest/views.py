@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.core.exceptions import RequestDataTooBig
 from django.http import HttpRequest, HttpResponse, JsonResponse
@@ -78,23 +79,33 @@ def _normalize_event_id(value: Any) -> str:
         return uuid.uuid4().hex
 
 
-def _accept_event(project_id: int, event: Any, fallback_id: Any = None) -> str:
+async def _enqueue(project_id: int, event: dict[str, Any], received_at: str) -> None:
+    """Enqueueing does blocking network I/O (Celery -> Redis), so run it off the event
+    loop without pinning it to Django's single thread-sensitive executor. Eager Celery
+    (tests) processes inline and touches the DB, so it must stay thread-sensitive."""
+    thread_sensitive = bool(settings.CELERY_TASK_ALWAYS_EAGER)
+    await sync_to_async(enqueue_event, thread_sensitive=thread_sensitive)(
+        project_id, event, received_at
+    )
+
+
+async def _accept_event(project_id: int, event: Any, fallback_id: Any = None) -> str:
     if not isinstance(event, dict):
         raise IngestError(400, "event must be a JSON object")
     event_id = _normalize_event_id(event.get("event_id") or fallback_id)
     event["event_id"] = event_id
-    enqueue_event(project_id, event, datetime.now(UTC).isoformat())
+    await _enqueue(project_id, event, datetime.now(UTC).isoformat())
     return event_id
 
 
-def _ingest(request: HttpRequest, project_id: int, kind: str) -> HttpResponse:
+async def _ingest(request: HttpRequest, project_id: int, kind: str) -> HttpResponse:
     if request.method == "OPTIONS":
         return _with_cors(HttpResponse(status=200))
     if request.method != "POST":
         return _with_cors(JsonResponse({"detail": "method not allowed"}, status=405))
     try:
-        key = authenticate(request, project_id)
-        check_rate_limit(key)
+        key = await authenticate(request, project_id)
+        await check_rate_limit(key)
         body = _read_body(request)
         _capture(project_id, request, body)
 
@@ -103,13 +114,15 @@ def _ingest(request: HttpRequest, project_id: int, kind: str) -> HttpResponse:
                 event = json.loads(body)
             except (ValueError, UnicodeDecodeError) as exc:
                 raise IngestError(400, "body is not valid JSON") from exc
-            return _with_cors(JsonResponse({"id": _accept_event(project_id, event)}))
+            return _with_cors(JsonResponse({"id": await _accept_event(project_id, event)}))
 
         envelope = parse_envelope(body)
         event_id: str | None = None
         for item in envelope.items:
             if item.type == "event":
-                event_id = _accept_event(project_id, item.json(), envelope.headers.get("event_id"))
+                event_id = await _accept_event(
+                    project_id, item.json(), envelope.headers.get("event_id")
+                )
             # Other item types are acknowledged and dropped (PROTOCOL.md §4).
         if event_id is None and envelope.headers.get("event_id"):
             event_id = _normalize_event_id(envelope.headers["event_id"])
@@ -121,10 +134,10 @@ def _ingest(request: HttpRequest, project_id: int, kind: str) -> HttpResponse:
 
 
 @csrf_exempt
-def envelope_endpoint(request: HttpRequest, project_id: int) -> HttpResponse:
-    return _ingest(request, project_id, "envelope")
+async def envelope_endpoint(request: HttpRequest, project_id: int) -> HttpResponse:
+    return await _ingest(request, project_id, "envelope")
 
 
 @csrf_exempt
-def store_endpoint(request: HttpRequest, project_id: int) -> HttpResponse:
-    return _ingest(request, project_id, "store")
+async def store_endpoint(request: HttpRequest, project_id: int) -> HttpResponse:
+    return await _ingest(request, project_id, "store")

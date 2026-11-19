@@ -16,6 +16,7 @@ x-backend: &backend
     - "host.docker.internal:host-gateway" # Linux; built in on Docker Desktop
   volumes:
     - ./backend:/app
+    - /app/.venv # hide the host's virtualenv from the container
   depends_on:
     postgres:
       condition: service_healthy
@@ -62,7 +63,7 @@ services:
 
   worker:
     <<: *backend
-    command: celery -A faultkeeper worker --beat --schedule /tmp/celerybeat-schedule --loglevel=info --concurrency=2
+    command: celery -A faultkeeper worker --beat --schedule /tmp/celerybeat-schedule --loglevel=info --concurrency=${CELERY_CONCURRENCY:-4}
 
   buggy-shop-api:
     build: ./demo/buggy-shop-api

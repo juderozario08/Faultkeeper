@@ -15,9 +15,11 @@ from organizations.models import Organization, OrganizationMember, Project, Proj
 DEMO_EMAIL = "admin@faultkeeper.local"
 DEMO_PASSWORD = "faultkeeper"
 
+# (name, slug, platform, rate limit per minute)
 DEMO_PROJECTS = [
-    ("Buggy Shop", "buggy-shop", "javascript"),
-    ("Buggy Shop API", "buggy-shop-api", "python"),
+    ("Buggy Shop", "buggy-shop", "javascript", 1000),
+    ("Buggy Shop API", "buggy-shop-api", "python", 1000),
+    ("Load Test", "load-test", "python", 1_000_000),
 ]
 
 
@@ -40,11 +42,12 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(self.style.SUCCESS(f"Login: {DEMO_EMAIL} / {DEMO_PASSWORD}"))
-        for name, slug, platform in DEMO_PROJECTS:
+        for name, slug, platform, rate_limit in DEMO_PROJECTS:
             project, _ = Project.objects.get_or_create(
                 organization=org, slug=slug, defaults={"name": name, "platform": platform}
             )
-            key, _ = ProjectKey.objects.get_or_create(
-                public_key=demo_key(slug), defaults={"project": project, "label": "Demo"}
+            key, _ = ProjectKey.objects.update_or_create(
+                public_key=demo_key(slug),
+                defaults={"project": project, "label": "Demo", "rate_limit_per_minute": rate_limit},
             )
             self.stdout.write(f"{slug:16s} DSN: {key.dsn()}")

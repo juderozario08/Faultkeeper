@@ -1,0 +1,22 @@
+{
+  "events": 5000,
+  "bugs": 25,
+  "concurrency": 16,
+  "seconds": 29.06,
+  "events_per_second": 172.1,
+  "latency_ms": {
+    "p50": 79.1,
+    "p95": 147.0,
+    "p99": 235.8,
+    "max": 408.6
+  },
+  "status_codes": {
+    "200": 5000
+  },
+  "processing": {
+    "issues": 25,
+    "events_processed": 8749,
+    "expected_issues": 25,
+    "drain_seconds": 0.6
+  }
+}

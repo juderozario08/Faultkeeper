@@ -136,7 +136,13 @@ docs/               Architecture, protocol, decisions, roadmap
 
 ## Benchmarks
 
-*Coming soon* — ingest throughput, p99 latency, and grouping accuracy measured with the scripts in `loadtest/`.
+5,000 events across 25 distinct bugs from 16 concurrent clients, on the local development stack ([details](loadtest/README.md)):
+
+| | Result |
+|---|---|
+| Grouping accuracy | 5,000 events → exactly **25 issues** (random line numbers and IDs in every event) |
+| Ingest throughput | **~200 events/s**, p99 **120 ms** (2× faster after moving ingest to async + native asyncio Redis) |
+| Processing throughput | **150 events/s** with 4 Celery workers |
 
 ## Acknowledgements
 

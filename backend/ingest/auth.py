@@ -1,12 +1,13 @@
-"""DSN key authentication and per-key rate limiting for the ingest edge."""
+"""DSN key authentication and per-key rate limiting for the ingest edge (async)."""
 
 import time
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
-from django.core.cache import cache
 from django.http import HttpRequest
 
 from organizations.models import ProjectKey
+
+from .store import get_store
 
 KEY_CACHE_TTL = 60
 
@@ -49,25 +50,27 @@ def extract_public_key(request: HttpRequest) -> str | None:
     return request.GET.get("sentry_key") or None
 
 
-def _load_key(public_key: str) -> KeyInfo | None:
+async def _load_key(public_key: str) -> KeyInfo | None:
+    store = get_store()
     cache_key = f"pk:{public_key}"
-    cached = cache.get(cache_key)
+    cached = await store.get_json(cache_key)
     if cached is not None:
         return KeyInfo(**cached) if cached else None
-    row = (
+    row = await (
         ProjectKey.objects.filter(public_key=public_key)
         .values("public_key", "project_id", "is_active", "rate_limit_per_minute")
-        .first()
+        .afirst()
     )
-    cache.set(cache_key, row or {}, KEY_CACHE_TTL)  # cache misses too
-    return KeyInfo(**row) if row else None
+    info = KeyInfo(**row) if row else None
+    await store.set_json(cache_key, asdict(info) if info else {}, KEY_CACHE_TTL)  # cache misses too
+    return info
 
 
-def authenticate(request: HttpRequest, project_id: int) -> KeyInfo:
+async def authenticate(request: HttpRequest, project_id: int) -> KeyInfo:
     public_key = extract_public_key(request)
     if not public_key:
         raise IngestError(401, "missing sentry_key")
-    info = _load_key(public_key)
+    info = await _load_key(public_key)
     if info is None or not info.is_active:
         raise IngestError(401, "invalid or disabled key")
     if info.project_id != project_id:
@@ -75,17 +78,11 @@ def authenticate(request: HttpRequest, project_id: int) -> KeyInfo:
     return info
 
 
-def check_rate_limit(info: KeyInfo, now: float | None = None) -> None:
+async def check_rate_limit(info: KeyInfo, now: float | None = None) -> None:
     """Fixed one-minute window per key."""
     now = time.time() if now is None else now
     minute = int(now // 60)
-    window_key = f"rl:{info.public_key}:{minute}"
-    cache.add(window_key, 0, timeout=120)
-    try:
-        count = cache.incr(window_key)
-    except ValueError:  # expired between add and incr
-        cache.set(window_key, 1, timeout=120)
-        count = 1
+    count = await get_store().incr_window(f"rl:{info.public_key}:{minute}", ttl=120)
     if count > info.rate_limit_per_minute:
         retry_after = max(1, 60 - int(now % 60))
         raise IngestError(

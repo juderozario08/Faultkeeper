@@ -90,5 +90,5 @@ def test_seed_demo_is_idempotent() -> None:
     call_command("seed_demo")
     call_command("seed_demo")
     assert User.objects.count() == 1
-    assert Project.objects.filter(organization__slug="demo").count() == 2
-    assert ProjectKey.objects.count() == 2
+    assert Project.objects.filter(organization__slug="demo").count() == 3
+    assert ProjectKey.objects.count() == 3
