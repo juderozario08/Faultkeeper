@@ -37,3 +37,6 @@ loadtest/results/*.raw.json
 *.swp
 .DS_Store
 Thumbs.db
+
+# Celery beat state
+celerybeat-schedule*

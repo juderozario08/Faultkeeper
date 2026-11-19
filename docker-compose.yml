@@ -62,7 +62,7 @@ services:
 
   worker:
     <<: *backend
-    command: celery -A faultkeeper worker --beat --loglevel=info --concurrency=2
+    command: celery -A faultkeeper worker --beat --schedule /tmp/celerybeat-schedule --loglevel=info --concurrency=2
 
 volumes:
   postgres-data:
