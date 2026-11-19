@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Faultkeeper</title>
+    <script>
+      // Apply the saved theme before first paint to avoid a flash (ADR 0012).
+      (function () {
+        var pref = "system";
+        try { pref = localStorage.getItem("fk-theme") || "system"; } catch (e) {}
+        var light = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+        var theme = pref === "system" ? (light ? "light" : "dark") : pref;
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.background = theme === "light" ? "#e1e2e7" : "#1a1b26";
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
