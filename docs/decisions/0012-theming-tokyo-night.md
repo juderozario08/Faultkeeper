@@ -34,9 +34,25 @@ Developers spend long sessions in error dashboards, and many prefer dark UIs. Th
 | `danger` | `#f7768e` | `#f52a65` | error level, destructive actions |
 | `teal` | `#73daca` | `#118c74` | in-app frame marker, sparkline |
 
+### Accessible text tokens
+
+Measured against the page background, several original palette colours fail WCAG AA (4.5:1) for normal text:
+- Dark `text-subtle` `#565f89`: 2.8:1.
+- Light `text` `#3760bf`: 4.5:1 on `bg`, but 3.5:1 on `surface-hover`.
+- Light `text-muted`: 3.6:1. Light `text-subtle`: 2.5:1. Light `accent`: 3.1:1. Light `danger`: 3.0:1.
+
+Rules:
+- The palette colours above are used **as-is for backgrounds, borders, accents, icons and chart series**.
+- **Text uses separate tokens that meet 4.5:1** on `bg`, `surface` and `surface-hover`. Examples:
+  - light `text-muted` `#4c5a8a` (5.2:1)
+  - light `text` on hover `#2f4a9a` (4.9:1 on `surface-hover`)
+  - light `danger-text` `#a01845` (6.0:1)
+- Dark `text-subtle` is only for large or non-essential text. Small hint text uses `text-muted`.
+- A unit test computes contrast for every text-token/background pair in both themes and fails below 4.5:1. Classroom projectors make low contrast worse.
+
 Level → color: `fatal` danger (bold), `error` danger, `warning` warning, `info` info, `debug` text-subtle.
 
 ## Consequences
 - One token file drives everything; adding a theme later is a new token set.
-- Contrast must be checked for both themes (WCAG AA for body text); Tokyo Night Day's muted tones may need slight darkening for small text.
+- Text stays readable in both themes and on projectors; the contrast test stops regressions.
 - Tests snapshot key components in both themes.

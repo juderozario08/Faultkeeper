@@ -72,7 +72,8 @@ This document is the source of truth for how Faultkeeper is built. If code and t
 
 | Component | Code location | Technology | Sentry equivalent | Phase |
 |---|---|---|---|---|
-| SDKs | `sdk/faultkeeper-js`, plus official SDKs | TypeScript | Sentry SDKs | 1 |
+| SDKs | official SDKs; `sdk/faultkeeper-js` after the course | TypeScript | Sentry SDKs | 1 / later |
+| Demo apps | `demo/buggy-shop` (browser) + `demo/buggy-shop-api` (Python) | React + `@sentry/browser`; Flask/FastAPI + `sentry-sdk` | — | 1 |
 | Ingest edge | `backend/ingest` → `relay/` | Django view → Rust/axum | Relay | 1 → 3 |
 | Event bus | Celery broker → Kafka | Redis → Kafka (KRaft) | Kafka | 1 → 2 |
 | Event pipeline | `backend/processing` | Celery workers | ingest consumers + `save_event` | 1 |
@@ -100,12 +101,12 @@ This document is the source of truth for how Faultkeeper is built. If code and t
    4. Decompress (`Content-Encoding: gzip|deflate|br`), parse the envelope, and keep `event` items. Other item types are acknowledged and dropped (see PROTOCOL.md).
    5. Enqueue `{project_id, received_at, payload}` and respond `200 {"id": "<event_id>"}`. **No processing happens in the request.**
 4. **Normalize.** Fill defaults (`level=error`, `platform`, timestamps), trim oversized strings and lists, normalize frames (strip query strings and cache-busting hashes from filenames, default `in_app`), and scrub obvious PII such as the `Authorization` and `Cookie` headers.
-5. **Symbolicate** *(phase 3)*. Map minified JS frames to original source using uploaded source maps for the event's `release`.
+5. **Symbolicate** *(phase 3)*. Map minified JS frames to original source using uploaded source maps for the event's `release`, and fetch JS source to fill in context lines. Browser SDKs don't send source lines for bundled scripts. Until phase 3, code context comes from SDKs that send it themselves, e.g. `sentry-sdk` for Python.
 6. **Fingerprint.** Compute the grouping hash (§5).
 7. **Group.** Look up `GroupHash(project, hash)`. If it exists, use that issue. If not, create a `Group` and a `GroupHash` in one transaction; a unique constraint plus `get_or_create` handles races. A resolved issue that receives a new event is marked **regressed** and moves back to unresolved.
 8. **Save.**
    - Insert the `Event` row (full JSONB payload).
-   - Increment `times_seen` and update `last_seen` through a **Redis buffer**, flushed to Postgres in batches every 10 s.
+   - Increment `times_seen` and update `last_seen` with an atomic `UPDATE` (`F('times_seen') + 1`), so the API and the WebSocket always agree. *(Phase 2: replace with a Redis write buffer flushed in batches, justified with before/after load-test numbers.)*
    - Upsert `Release` and `Environment` rows if they are new.
    - *(Phase 2)* Publish the processed event to Kafka `events` → ClickHouse.
 9. **Broadcast.** Publish `issue.created` or `issue.updated` to the Channels group `project.<id>`. Connected dashboards update immediately.
@@ -171,8 +172,8 @@ TTL toDateTime(timestamp) + INTERVAL 30 DAY;
 |---|---|---|
 | `pk:<public_key>` | string (JSON), TTL 60 s | ProjectKey cache |
 | `rl:<public_key>:<epoch_minute>` | counter, TTL 120 s | rate limiting |
-| `buf:group:<id>` | hash {times_seen, last_seen} | count buffer |
-| `buf:dirty` | set of group ids | groups pending flush |
+| `buf:group:<id>` *(phase 2)* | hash {times_seen, last_seen} | count buffer |
+| `buf:dirty` *(phase 2)* | set of group ids | groups pending flush |
 | Celery queues | lists | phase 1 broker |
 | `asgi:*` | Channels layer | WebSocket pub/sub |
 
@@ -218,7 +219,7 @@ The rules are versioned (`GROUPING_CONFIG = "faultkeeper:2026-11"`) so they can 
 | GET | `/api/0/projects/<org>/<project>/stats/?interval=1h&period=24h` | chart series (Postgres in P1, ClickHouse in P2) |
 | POST/GET | `/api/0/issues/<id>/insights/` | generate / read Issue Insights |
 
-Issue search supports `is:unresolved`, `level:error`, `release:<v>`, `environment:<e>` and free text in the title.
+Issue filtering in phase 1 uses plain query parameters: `?status=&level=&release=&environment=&q=` (`q` = free text in the title). A Sentry-style search syntax (`is:unresolved level:error release:1.2`) comes later as a parser that maps onto these same filters.
 
 ### Realtime
 `WS /ws/projects/<project_id>/`: requires a session and project access.
@@ -235,9 +236,12 @@ Messages sent to the client:
 
 - **Interface:** `backend/insights/providers/base.py` defines `InsightProvider.generate(context: IssueContext) -> Insight`.
 - **Implementations:** `ollama.py` (default; local, free), `gemini.py` (free tier, used for the hosted demo), `disabled.py`.
-- **Configuration:** `INSIGHTS_PROVIDER=ollama|gemini|disabled`, `INSIGHTS_MODEL=<name>`, `GEMINI_API_KEY` (never committed).
-- **Privacy:** the context contains no user identifiers, IPs, cookies or request bodies. It is built only from the exception, frames, breadcrumb categories and messages, and tags.
-- **Output:** the model must return JSON `{summary, root_cause, suggested_fix}`. Invalid output gets one retry, then an error message is shown in the UI.
+- **Ollama runs natively on the host, not in Docker.** Containers can't use the GPU on macOS, and Docker on Windows only supports NVIDIA GPUs. The backend reaches it at `http://host.docker.internal:11434` (compose adds `extra_hosts: host.docker.internal:host-gateway` for Linux). A containerised Ollama is available via `--profile ai` for Linux/NVIDIA machines.
+- **Default model:** a small code-capable model that fits an 8 GB Apple M1. It's configurable.
+- **Fallback:** if the provider is unreachable, Insights reports itself as unavailable (`disabled` behaviour) instead of erroring.
+- **Configuration:** `INSIGHTS_PROVIDER=ollama|gemini|disabled`, `INSIGHTS_MODEL=<name>`, `OLLAMA_URL`, `GEMINI_API_KEY` (never committed).
+- **Privacy:** the context contains no user identifiers, IPs, cookies, request bodies, URL query strings or **frame local variables** (`vars`, sent by `sentry-sdk`). It is built only from the exception, frames and context lines, breadcrumb categories and messages, and tags.
+- **Output:** uses each provider's structured-output mode (Ollama `format` with a JSON schema; Gemini `responseSchema`) to get `{summary, root_cause, suggested_fix}`. Schema validation failure → error shown in the UI.
 - Results are cached per issue. Users can regenerate them on demand.
 
 ---
@@ -246,7 +250,7 @@ Messages sent to the client:
 
 - **Stack:** React + TypeScript + Vite, React Router, TanStack Query (server state), Emotion (styling), ECharts (charts), Vitest + React Testing Library.
 - **Pages:** Login → Organization/Project picker → **Issues list** (search, status filter, live updates, sparkline) → **Issue detail** (title, culprit, counts, stack trace with in-app highlighting, breadcrumbs timeline, tags, event navigation, resolve/ignore, Insights panel) → **Project settings** (DSN, rate limit, setup snippet).
-- **Theming:** Light and Dark themes. **Dark = Tokyo Night**, **Light = Tokyo Night Day**. The default follows the OS. A header toggle (Light / Dark / System) is saved in `localStorage` and applied before first paint. All colors are semantic tokens in `frontend/src/theme/` (CSS variables + Emotion theme). Components never use raw hex values, and ECharts uses the same tokens. Palette: [ADR 0012](decisions/0012-theming-tokyo-night.md).
+- **Theming:** Light and Dark themes. **Dark = Tokyo Night**, **Light = Tokyo Night Day**. The default follows the OS. A header toggle (Light / Dark / System) is saved in `localStorage` and applied before first paint. All colors are semantic tokens in `frontend/src/theme/` (CSS variables + Emotion theme). Components never use raw hex values, and ECharts uses the same tokens. Text tokens are adjusted to meet WCAG AA (4.5:1), and a unit test enforces it. Palette: [ADR 0012](decisions/0012-theming-tokyo-night.md).
 - **Realtime:** one WebSocket per open project. Incoming messages update the TanStack Query cache directly instead of refetching.
 - **Dev server:** Vite proxies `/api` and `/ws` to Django, so cookies stay on the same origin.
 
@@ -255,34 +259,44 @@ Messages sent to the client:
 ## 9. Deployment and environments
 
 ### Local (primary; used for demos)
-| Service | Image / runtime | Port |
-|---|---|---|
-| `web` | Django on ASGI (uvicorn) | 8000 |
-| `worker` | Celery worker + beat | — |
-| `postgres` | postgres:16 | 5432 |
-| `redis` | redis:7 | 6379 |
-| `frontend` | Vite dev server | 5173 |
-| `buggy-shop` | Vite dev server | 5174 |
-| `ollama` | ollama/ollama | 11434 |
-| `kafka` *(full)* | apache/kafka (KRaft) | 9092 |
-| `clickhouse` *(full)* | clickhouse/clickhouse-server | 8123 / 9000 |
-| `relay` *(phase 3)* | Rust binary | 3000 |
 
-`docker-compose.yml` contains the phase 1 services. `docker-compose.full.yml` is an overlay that adds Kafka and ClickHouse and switches `EVENT_BUS=kafka`.
+Must run identically on **macOS (Apple Silicon)** and **Windows**.
+
+| Service | Runs in | Port | Compose profile |
+|---|---|---|---|
+| `web` (Django, ASGI/uvicorn) | Docker | 8000 | default |
+| `worker` (Celery worker + beat) | Docker (Celery doesn't support Windows natively) | — | default |
+| `postgres` | Docker, postgres:16 | 5432 | default |
+| `redis` | Docker, redis:7 | 6379 | default |
+| `buggy-shop-api` (Flask/FastAPI + `sentry-sdk`) | Docker | 5175 | default |
+| `frontend` (Vite dev server) | **native Node** | 5173 | — |
+| `buggy-shop` (Vite dev server) | **native Node** | 5174 | — |
+| Ollama | **native app** | 11434 | — (`ai` profile for Linux/NVIDIA) |
+| `kafka` (apache/kafka, KRaft) | Docker | 9092 | `full` |
+| `clickhouse` | Docker | 8123 / 9000 | `full` |
+| `relay` *(phase 3)* | Docker, Rust binary | 3000 | `full` |
+
+- **One compose file with profiles:** `docker compose up` starts only the core. `--profile full` adds Kafka + ClickHouse (and sets `EVENT_BUS=kafka`). `--profile ai` adds a containerised Ollama.
+- **Vite apps run natively:** file watching over bind mounts is unreliable on Windows, and `node_modules` access through Docker is slow on both platforms.
+- **Images must publish `linux/arm64`** builds so they run natively on Apple Silicon. Verify each tag when pinning.
+- **Line endings:** `.gitattributes` forces LF (`* text=auto eol=lf`), so scripts checked out on Windows still run inside Linux containers.
 
 ### Hosted demo (free tiers, phase 1 feature set)
 | Part | Provider |
 |---|---|
-| Web + worker (one container) | Render free web service |
+| Django API **+ built dashboard** (same origin) | Render free web service |
 | Postgres | Neon free tier |
-| Redis | Upstash free tier |
-| Dashboard + Buggy Shop | Cloudflare Pages |
+| Buggy Shop (static) | Cloudflare Pages |
 | Insights | Gemini free tier |
+
+- **Same origin for the dashboard:** Django serves the built dashboard with WhiteNoise. A dashboard on a different site would need cross-site session cookies, which Safari and Firefox block. The Buggy Shop can live elsewhere because ingest uses CORS `*` and no cookies.
+- **Single-process mode** (`DEPLOY_MODE=single`): an in-process worker thread replaces Celery, an in-memory channel layer replaces Redis pub/sub, and an in-memory cache replaces Redis caching and rate-limit counters. The hosted demo then needs no Redis, which avoids free-tier request quotas and fits Render's 512 MB. This is possible because `process_event` doesn't depend on the transport ([ADR 0004](decisions/0004-event-bus-celery-then-kafka.md)).
+- **Unminified demo build:** the hosted Buggy Shop is built with minification off (source maps still emitted) until phase 3 symbolication. Minified names would make stack traces unreadable and split grouping on every deploy.
 
 Free-tier limits change, so check them at deploy time ([ADR 0007](decisions/0007-zero-cost-infrastructure.md)). Kafka, ClickHouse and Relay run locally only.
 
 ### Configuration (`.env`)
-`DJANGO_SECRET_KEY`, `DATABASE_URL`, `REDIS_URL`, `EVENT_BUS=celery|kafka`, `KAFKA_BOOTSTRAP`, `CLICKHOUSE_URL`, `INSIGHTS_PROVIDER`, `INSIGHTS_MODEL`, `GEMINI_API_KEY`, `EVENT_RETENTION_DAYS`, `INGEST_MAX_BYTES`. `.env.example` lists every variable with a safe default. Secrets are never committed.
+`DJANGO_SECRET_KEY`, `DATABASE_URL`, `REDIS_URL`, `DEPLOY_MODE=standard|single`, `EVENT_BUS=celery|kafka`, `OLLAMA_URL`, `KAFKA_BOOTSTRAP`, `CLICKHOUSE_URL`, `INSIGHTS_PROVIDER`, `INSIGHTS_MODEL`, `GEMINI_API_KEY`, `EVENT_RETENTION_DAYS`, `INGEST_MAX_BYTES`. `.env.example` lists every variable with a safe default. Secrets are never committed.
 
 ---
 

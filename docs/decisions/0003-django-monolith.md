@@ -6,9 +6,10 @@
 Sentry's core is a Python/Django monolith. Faultkeeper needs an ORM with migrations, auth and sessions, an admin, a REST layer and WebSockets, all delivered quickly.
 
 ## Decision
-- One Django 5 project (`backend/`) served over ASGI (uvicorn), with apps: `organizations`, `ingest`, `processing`, `issues`, `realtime`, `insights`, `snuba_lite`.
+- Pinned versions: **Django 5.2 LTS** (supported until April 2028) and **Python 3.12**, pinned with `.python-version` so the host machine's own Python (macOS or Windows) doesn't matter.
+- One Django project (`backend/`) served over ASGI (uvicorn), with apps: `organizations`, `ingest`, `processing`, `issues`, `realtime`, `insights`, `snuba_lite`.
 - Django REST Framework for the web API; Django Channels (Redis channel layer) for WebSockets.
-- Python 3.12. Dependencies managed with `uv`. Lint and format with ruff; type-check with mypy.
+- Dependencies managed with `uv`. Lint and format with ruff; type-check with mypy.
 - Session authentication + CSRF for the dashboard (same-origin through the Vite proxy). DSN keys for ingest.
 
 ## Consequences

@@ -106,14 +106,14 @@ Dropping unsupported items is intentional. SDKs treat any non-2xx response as a 
     "frames": [
       { "filename": "app.js", "abs_path": "http://localhost:5174/assets/app.js",
         "function": "checkout", "module": null, "lineno": 42, "colno": 17,
-        "in_app": true, "context_line": "  const total = item.price * qty;",
-        "pre_context": ["..."], "post_context": ["..."] }
+        "in_app": true }
     ]
   }
 }
 ```
 
 - Frames are ordered **oldest call first, most recent call last**, so the crashing frame is the last element.
+- **Context lines** (`context_line`, `pre_context`, `post_context`) are sent by server SDKs such as `sentry-sdk` for Python, which also sends local variables in `vars`. Browser SDKs **do not** send source lines for bundled scripts. Filling them in (source fetching / source maps) is phase 3.
 - With chained exceptions, `exception.values` is ordered oldest (cause) first.
 
 ## 6. Legacy store endpoint

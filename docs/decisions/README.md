@@ -13,7 +13,7 @@ Each file records one significant decision: the context, the decision, and its c
 | [0007](0007-zero-cost-infrastructure.md) | Zero-cost infrastructure | Accepted |
 | [0008](0008-pluggable-llm-provider.md) | Pluggable LLM provider for Issue Insights | Accepted |
 | [0009](0009-rust-ingest-edge.md) | Rust ingest edge in phase 3 | Accepted |
-| [0010](0010-frontend-stack.md) | Frontend stack | Accepted |
+| [0010](0010-frontend-stack.md) | Frontend stack and demo apps | Accepted |
 | [0011](0011-realtime-websockets.md) | Push updates over WebSockets | Accepted |
 | [0012](0012-theming-tokyo-night.md) | Light + dark themes; dark = Tokyo Night, light = Tokyo Night Day | Accepted |
 

@@ -8,7 +8,8 @@ A custom-only SDK would limit adoption and prove little. The Sentry SDKs are MIT
 ## Decision
 - Implement the envelope (`/api/<id>/envelope/`) and legacy store (`/api/<id>/store/`) endpoints from the public protocol docs. Official SDKs work by changing only the DSN.
 - **Never copy or adapt Sentry server source code.** Use only the public docs and observed SDK traffic.
-- Still ship a small first-party SDK (`faultkeeper-js`) to understand and own the client side.
+- Later (after phase 1), ship a small first-party SDK (`faultkeeper-js`) to understand and own the client side. Phase 1 demos use the official SDKs only.
+- Demo with **both** official SDKs: `@sentry/browser` (Buggy Shop) and `sentry-sdk` for Python (Buggy Shop API).
 - Acknowledge unsupported item types with 2xx and drop them.
 
 ## Consequences

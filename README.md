@@ -20,7 +20,8 @@ Faultkeeper captures crashes and exceptions from your applications, groups dupli
 | 👥 | **Organizations, projects, and role-based access** (owner / admin / member) | 1 |
 | 🌗 | **Light & dark themes**: Tokyo Night dark, Tokyo Night Day light, follows your OS | 1 |
 | 💡 | **Issue Insights** — LLM-generated root-cause analysis and suggested fixes, using a local model by default | 1 |
-| 📦 | **Lightweight first-party SDK** (`faultkeeper-js`) written in TypeScript | 1 |
+| 🧪 | **Demo apps** — a buggy storefront (`@sentry/browser`) and API (`sentry-sdk` for Python) | 1 |
+| 📦 | **Lightweight first-party SDK** (`faultkeeper-js`) written in TypeScript | 2 |
 | 🚚 | **Kafka event pipeline** between ingestion and processing | 2 |
 | 📈 | **ClickHouse analytics** — fast search and time-series charts over millions of events | 2 |
 | 🦀 | **Rust ingest edge** (`relay/`) for high-throughput validation and rate limiting | 3 |
@@ -63,14 +64,20 @@ Full details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
 ## Quick start
 
-> Requires Docker Desktop. Everything runs locally and costs nothing.
+> Requires Docker Desktop and Node.js. Works on macOS (Apple Silicon) and Windows. Everything runs locally and costs nothing.
 
 ```bash
 git clone https://github.com/juderozario08/Faultkeeper.git
 cd Faultkeeper
 cp .env.example .env
-docker compose up --build
+docker compose up --build          # API, workers, Postgres, Redis, demo API
+
+# in two more terminals
+cd frontend && npm install && npm run dev
+cd demo/buggy-shop && npm install && npm run dev
 ```
+
+Optional: install [Ollama](https://ollama.com) natively to enable Issue Insights (GPU-accelerated on Apple Silicon and Windows).
 
 | Service | URL |
 |---|---|
@@ -81,7 +88,7 @@ docker compose up --build
 Run the full Sentry-style pipeline (Kafka + ClickHouse):
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.full.yml up --build
+docker compose --profile full up --build
 ```
 
 ## Sending your first error
@@ -112,6 +119,7 @@ backend/            Django project (ingest, processing, issues API, realtime, in
 frontend/           React + TypeScript dashboard
 sdk/faultkeeper-js/ First-party TypeScript SDK
 demo/buggy-shop/    Demo storefront with intentional bugs
+demo/buggy-shop-api/ Demo Python API with intentional bugs
 relay/              Rust ingest edge (phase 3)
 loadtest/           Load-testing scripts and benchmark results
 docs/               Architecture, protocol, decisions, roadmap

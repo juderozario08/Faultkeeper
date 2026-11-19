@@ -15,6 +15,6 @@ Deliver it in phases so a working product exists at every step:
 - **Phase 3:** Rust edge, source maps
 
 ## Consequences
-- More moving parts than a toy app. The Docker Compose overlay keeps phase 1 light.
+- More moving parts than a toy app. Docker Compose profiles keep the default `docker compose up` light.
 - Every component has a clear Sentry counterpart, which makes the design easy to explain and justify.
 - Deliberate simplifications (no separate Snuba service, no Memcached, one worker type) are listed in ARCHITECTURE.md.
