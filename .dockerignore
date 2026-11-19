@@ -1,0 +1,14 @@
+**/node_modules
+**/.venv
+**/__pycache__
+**/dist
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/db.sqlite3
+**/staticfiles
+.git
+.env
+loadtest
+demo
+docs

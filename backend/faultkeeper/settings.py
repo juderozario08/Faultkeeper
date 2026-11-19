@@ -145,6 +145,14 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
+# Built dashboard served by Django in production / hosted demo (ADR 0007).
+FRONTEND_DIST = os.environ.get("FRONTEND_DIST", "")
+WHITENOISE_ROOT = FRONTEND_DIST or None  # serves /assets/*, /favicon.svg, ...
+
+SESSION_COOKIE_SECURE = env_bool("DJANGO_SECURE_COOKIES", False)
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STORAGES = {

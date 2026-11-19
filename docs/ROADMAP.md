@@ -73,7 +73,8 @@ Legend: ☐ todo · ◐ in progress · ☑ done
 ### M10. Ship
 - ☑ Load test script + benchmark numbers in README
 - ☑ Single-process mode (`DEPLOY_MODE=single`): in-process worker, in-memory channel layer + cache (verified without Redis)
-- ☐ Hosted demo on free tiers: Django serves the built dashboard (same origin); unminified Buggy Shop on Pages
+- ☑ Production image: Django serves the built dashboard (same origin), single-process mode; verified with a live update
+- ☐ Hosted demo on free tiers (Render + Neon); unminified Buggy Shop on Cloudflare Pages
 - ☐ README screenshots / demo GIF
 
 ---

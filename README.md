@@ -91,6 +91,15 @@ Run the full Sentry-style pipeline (Kafka + ClickHouse):
 docker compose --profile full up --build
 ```
 
+## Production image
+
+A single container runs the API, the event pipeline (single-process mode, no Redis needed) and the built dashboard on one origin:
+
+```bash
+docker build -t faultkeeper .
+docker run -p 8000:8000   -e DATABASE_URL=postgres://user:pass@host:5432/db   -e DJANGO_SECRET_KEY=change-me   -e DJANGO_ALLOWED_HOSTS=your.host -e DJANGO_CSRF_TRUSTED_ORIGINS=https://your.host   -e FAULTKEEPER_PUBLIC_URL=https://your.host   faultkeeper
+```
+
 ## Sending your first error
 
 Create a project in the dashboard, copy its DSN, and use the **official Sentry SDK**:
