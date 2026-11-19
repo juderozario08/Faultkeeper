@@ -11,12 +11,12 @@ Legend: ☐ todo · ◐ in progress · ☑ done
 **Target:** a complete, Sentry-SDK-compatible error tracker running with `docker compose up`.
 
 ### M1. Foundation
-- ☐ Repo scaffolding: `backend/`, `frontend/`, `sdk/`, `demo/`, `loadtest/`
-- ☐ `docker-compose.yml` (core services; `full` and `ai` profiles), multi-arch (`linux/arm64`) images, Vite apps run natively
-- ☐ `.gitattributes` (LF line endings), `.python-version` (3.12), Django 5.2 LTS
-- ☐ Verified on macOS (Apple Silicon) and Windows
-- ☐ Django project on ASGI, settings from environment, `.env.example`
-- ☐ CI: ruff, mypy, pytest, eslint, tsc, vitest
+- ◐ Repo scaffolding: `backend/` done; `frontend/`, `demo/`, `loadtest/` arrive with their stories
+- ☑ `docker-compose.yml` core services (postgres, redis, web, worker) with health checks and multi-arch images; `full` / `ai` profiles arrive with phase 2 / Insights
+- ☑ `.gitattributes` (LF line endings), `.python-version` (3.12), Django 5.2 LTS
+- ◐ Verified on Windows (Docker + native tests); Linux/macOS covered by the CI matrix once pushed
+- ☑ Django project on ASGI, settings from environment, `.env.example`, `/api/0/health/`
+- ◐ CI: backend ruff, mypy, pytest on Linux/Windows/macOS + compose smoke test; frontend jobs come with the frontend
 
 ### M2. Tenancy and auth
 - ☐ Custom `User`, `Organization`, `OrganizationMember` (owner/admin/member), `Project`, `ProjectKey`
