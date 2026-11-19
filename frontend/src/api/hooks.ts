@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { api, ApiError, ensureCsrf } from "./client";
 import type {
   EventDetail,
+  InsightState,
   Issue,
   IssueFilters,
   IssueStatus,
@@ -25,6 +26,7 @@ export const keys = {
   issue: (id: number) => ["issue", id] as const,
   event: (issueId: number, eventId: string) => ["event", issueId, eventId] as const,
   tags: (issueId: number) => ["tags", issueId] as const,
+  insights: (issueId: number) => ["insights", issueId] as const,
   stats: (org: string, project: string, period: string) => ["stats", org, project, period] as const,
   filters: (org: string, project: string) => ["filters", org, project] as const,
 };
@@ -148,5 +150,17 @@ export function useUpdateIssueStatus(issueId: number) {
       client.setQueryData(keys.issue(issueId), issue);
       client.invalidateQueries({ queryKey: ["issues"] });
     },
+  });
+}
+
+export function useInsights(issueId: number) {
+  return useQuery({ queryKey: keys.insights(issueId), queryFn: () => api<InsightState>(`issues/${issueId}/insights/`) });
+}
+
+export function useGenerateInsight(issueId: number) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: () => api<InsightState>(`issues/${issueId}/insights/`, { method: "POST" }),
+    onSuccess: (state) => client.setQueryData(keys.insights(issueId), state),
   });
 }

@@ -12,3 +12,4 @@ CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
 CELERY_TASK_ALWAYS_EAGER = True
 MIDDLEWARE = [m for m in MIDDLEWARE if not m.startswith("whitenoise")]  # noqa: F405
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+INSIGHTS_PROVIDER = "disabled"

@@ -74,5 +74,17 @@ services:
     depends_on:
       - web
 
+  # Optional: containerised Ollama for Linux/NVIDIA hosts or quick testing.
+  # On macOS/Windows prefer the native Ollama app (GPU acceleration).
+  #   docker compose --profile ai up -d && docker compose exec ollama ollama pull qwen2.5-coder:3b
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ai"]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+
 volumes:
   postgres-data:
+  ollama-models:

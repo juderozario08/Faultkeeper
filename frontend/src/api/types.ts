@@ -137,3 +137,18 @@ export interface StreamMessage {
   type: "issue.created" | "issue.updated";
   issue: Issue;
 }
+
+export interface Insight {
+  summary: string;
+  root_cause: string;
+  suggested_fix: string;
+  provider: string;
+  model: string;
+  created_at: string;
+}
+
+export interface InsightState {
+  insight: Insight | null;
+  available: boolean;
+  provider_detail: string;
+}

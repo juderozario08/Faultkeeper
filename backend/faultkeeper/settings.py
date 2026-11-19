@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "processing",
     "issues",
     "realtime",
+    "insights",
 ]
 
 AUTH_USER_MODEL = "organizations.User"
@@ -60,6 +61,13 @@ INGEST_MAX_BYTES = int(os.environ.get("INGEST_MAX_BYTES", 1024 * 1024))
 INGEST_CAPTURE_DIR = os.environ.get("INGEST_CAPTURE_DIR", "")  # dev aid for SDK fixtures
 DATA_UPLOAD_MAX_MEMORY_SIZE = INGEST_MAX_BYTES + 1024
 EVENT_RETENTION_DAYS = int(os.environ.get("EVENT_RETENTION_DAYS", 30))
+
+# Issue Insights (ADR 0008): ollama | gemini | disabled
+INSIGHTS_PROVIDER = os.environ.get("INSIGHTS_PROVIDER", "ollama")
+INSIGHTS_MODEL = os.environ.get("INSIGHTS_MODEL", "")
+INSIGHTS_TIMEOUT_SECONDS = float(os.environ.get("INSIGHTS_TIMEOUT_SECONDS", 120))
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

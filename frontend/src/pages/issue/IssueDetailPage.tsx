@@ -19,6 +19,7 @@ import { useProjectStream } from "../../realtime/useProjectStream";
 import { color } from "../../theme/tokens";
 import { formatCount, formatDateTime, timeAgo } from "../../utils/format";
 import { BreadcrumbsPanel, ContextPanel, TagsPanel } from "./EventSections";
+import { InsightsPanel } from "./InsightsPanel";
 import { ExceptionView } from "./StackTrace";
 
 const Grid = styled.div`
@@ -141,6 +142,7 @@ export function IssueDetailPage() {
 
       <Grid>
         <div style={{ display: "grid", gap: 16, minWidth: 0 }}>
+          <InsightsPanel issueId={id} />
           <Panel>
             <PanelHeader>
               <span>
