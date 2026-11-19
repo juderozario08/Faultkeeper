@@ -11,7 +11,7 @@ from channels.auth import AuthMiddlewareStack  # noqa: E402
 from channels.routing import ProtocolTypeRouter, URLRouter  # noqa: E402
 from channels.security.websocket import AllowedHostsOriginValidator  # noqa: E402
 
-websocket_urlpatterns: list = []  # filled in by the realtime app (story 7.0)
+from realtime.routing import websocket_urlpatterns  # noqa: E402
 
 application = ProtocolTypeRouter(
     {

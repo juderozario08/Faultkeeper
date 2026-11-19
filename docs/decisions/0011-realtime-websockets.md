@@ -9,7 +9,8 @@ Seeing an error appear the moment it happens is the core demo moment. Polling ad
 - Django Channels with a Redis channel layer.
 - After saving, workers publish `issue.created` / `issue.updated` to group `project.<id>`.
 - Clients connect to `/ws/projects/<id>/` (session-authenticated, permission-checked) and update the TanStack Query cache in place.
-- Count updates are throttled: at most one `issue.updated` per issue per second.
+- Every processed event publishes an update (fine at phase 1 volumes). Per-issue throttling (at most one `issue.updated` per second) arrives in phase 2 with the Redis count buffer, which already batches updates.
+- Rejected connections close with code `4403`.
 
 ## Consequences
 - Needs an ASGI server and a Redis channel layer in every environment.
