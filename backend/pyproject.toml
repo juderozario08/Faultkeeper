@@ -52,5 +52,13 @@ python_version = "3.12"
 plugins = ["mypy_django_plugin.main"]
 ignore_missing_imports = true
 
+[tool.pyright]
+# Used when the editor opens backend/ directly; the repo root has pyrightconfig.json.
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.12"
+exclude = ["**/migrations", ".venv"]
+typeCheckingMode = "basic"
+
 [tool.django-stubs]
 django_settings_module = "faultkeeper.settings_test"

@@ -43,7 +43,7 @@ def login_view(request: Request) -> Response:
     if user is None:
         return Response({"detail": "Invalid email or password."}, status=400)
     login(request._request, user)
-    return Response(UserSerializer(user).data)
+    return Response(UserSerializer(cast(User, user)).data)
 
 
 @api_view(["POST"])

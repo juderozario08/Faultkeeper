@@ -43,6 +43,7 @@ if (Get-Command uv -ErrorAction SilentlyContinue) {
     Run "backend: ruff format" { In-Dir backend { uv run ruff format --check . } }
     Run "backend: mypy"        { In-Dir backend { uv run mypy . } }
     Run "backend: pytest"      { In-Dir backend { uv run pytest } }
+    Run "pyright (editor types)" { uvx pyright }
 } else {
     Write-Host "uv not found (https://docs.astral.sh/uv/); running backend checks inside Docker instead."
     Run "backend: lint, types, tests (Docker)" {

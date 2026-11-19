@@ -1,11 +1,16 @@
 import secrets
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
+
+if TYPE_CHECKING:
+    from django.db.models.fields.related_descriptors import RelatedManager
+
+    from issues.models import Environment, Event, Group, Release
 
 
 class UserManager(BaseUserManager["User"]):
@@ -28,6 +33,10 @@ class UserManager(BaseUserManager["User"]):
 class User(AbstractBaseUser, PermissionsMixin):
     """Logs in with email, like Sentry."""
 
+    # Attributes Django adds at runtime, declared for editors/type checkers.
+    id: int
+    memberships: "RelatedManager[OrganizationMember]"
+
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=200, blank=True)
     is_active = models.BooleanField(default=True)
@@ -45,6 +54,10 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class Organization(models.Model):
+    id: int
+    members: "RelatedManager[OrganizationMember]"
+    projects: "RelatedManager[Project]"
+
     name = models.CharField(max_length=100)
     slug = models.SlugField(max_length=50, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -58,6 +71,10 @@ class OrganizationMember(models.Model):
         OWNER = "owner"
         ADMIN = "admin"
         MEMBER = "member"
+
+    id: int
+    organization_id: int
+    user_id: int
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="members")
     user = models.ForeignKey(
@@ -76,6 +93,14 @@ class OrganizationMember(models.Model):
 
 
 class Project(models.Model):
+    id: int
+    organization_id: int
+    keys: "RelatedManager[ProjectKey]"
+    releases: "RelatedManager[Release]"
+    environments: "RelatedManager[Environment]"
+    groups: "RelatedManager[Group]"
+    events: "RelatedManager[Event]"
+
     organization = models.ForeignKey(
         Organization, on_delete=models.CASCADE, related_name="projects"
     )
@@ -99,6 +124,9 @@ def generate_public_key() -> str:
 
 class ProjectKey(models.Model):
     """A DSN key. SDKs authenticate with `public_key`."""
+
+    id: int
+    project_id: int
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="keys")
     label = models.CharField(max_length=64, default="Default")

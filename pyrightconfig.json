@@ -1,0 +1,9 @@
+{
+  "venvPath": "backend",
+  "venv": ".venv",
+  "pythonVersion": "3.12",
+  "include": ["backend", "loadtest"],
+  "exclude": ["**/node_modules", "**/.venv", "**/__pycache__", "**/migrations"],
+  "executionEnvironments": [{ "root": "backend" }, { "root": "loadtest" }],
+  "typeCheckingMode": "basic"
+}

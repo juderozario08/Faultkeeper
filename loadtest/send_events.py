@@ -130,7 +130,7 @@ def api_session(base: str, email: str, password: str) -> urllib.request.OpenerDi
     jar = http.cookiejar.CookieJar()
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
     opener.open(f"{base}/api/0/auth/csrf/")
-    token = next(c.value for c in jar if c.name == "csrftoken")
+    token = next(c.value for c in jar if c.name == "csrftoken") or ""
     login = urllib.request.Request(
         f"{base}/api/0/auth/login/",
         data=json.dumps({"email": email, "password": password}).encode(),

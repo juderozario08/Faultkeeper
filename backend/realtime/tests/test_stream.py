@@ -31,7 +31,7 @@ def send_event(project_id: int) -> None:
 
 def connect(project_id: int, user: object) -> WebsocketCommunicator:
     communicator = WebsocketCommunicator(app, f"/ws/projects/{project_id}/")
-    communicator.scope["user"] = user
+    communicator.scope["user"] = user  # pyright: ignore[reportGeneralTypeIssues]
     return communicator
 
 

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
@@ -16,8 +16,9 @@ class ProjectStreamConsumer(AsyncJsonWebsocketConsumer):
     group_name: str | None = None
 
     async def connect(self) -> None:
-        user = self.scope.get("user")
-        project_id = int(self.scope["url_route"]["kwargs"]["project_id"])
+        user = cast(Any, self.scope.get("user"))
+        route = cast(dict[str, Any], self.scope.get("url_route") or {})
+        project_id = int(route["kwargs"]["project_id"])
         allowed = bool(user and user.is_authenticated) and await database_sync_to_async(
             user_can_access_project
         )(user, project_id)

@@ -1,9 +1,19 @@
+from typing import TYPE_CHECKING
+
 from django.db import models
 
 from organizations.models import Project
 
+if TYPE_CHECKING:
+    from django.db.models.fields.related_descriptors import RelatedManager
+
+    from insights.models import IssueInsight
+
 
 class Release(models.Model):
+    id: int
+    project_id: int
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="releases")
     version = models.CharField(max_length=250)
     first_seen = models.DateTimeField()
@@ -18,6 +28,9 @@ class Release(models.Model):
 
 
 class Environment(models.Model):
+    id: int
+    project_id: int
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="environments")
     name = models.CharField(max_length=64)
 
@@ -32,6 +45,14 @@ class Environment(models.Model):
 
 class Group(models.Model):
     """An issue: all events that share a grouping hash."""
+
+    # Attributes Django adds at runtime, declared for editors/type checkers.
+    id: int
+    project_id: int
+    first_release_id: int | None
+    events: "RelatedManager[Event]"
+    hashes: "RelatedManager[GroupHash]"
+    insights: "RelatedManager[IssueInsight]"
 
     class Status(models.TextChoices):
         UNRESOLVED = "unresolved"
@@ -69,6 +90,10 @@ class Group(models.Model):
 
 
 class GroupHash(models.Model):
+    id: int
+    project_id: int
+    group_id: int
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     hash = models.CharField(max_length=32)
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="hashes")
@@ -84,6 +109,10 @@ class GroupHash(models.Model):
 
 class Event(models.Model):
     """One occurrence. `payload` is the full normalized event (our nodestore)."""
+
+    id: int
+    project_id: int
+    group_id: int
 
     event_id = models.UUIDField()
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="events")

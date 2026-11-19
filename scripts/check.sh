@@ -66,6 +66,7 @@ if command -v uv >/dev/null 2>&1; then
   run "backend: ruff format"    in_dir backend uv run ruff format --check .
   run "backend: mypy"           in_dir backend uv run mypy .
   run "backend: pytest"         in_dir backend uv run pytest
+  run "pyright (editor types)"  uvx pyright
 else
   echo "uv not found (https://docs.astral.sh/uv/); running backend checks inside Docker instead."
   backend_in_docker() {

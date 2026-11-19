@@ -6,6 +6,9 @@ from issues.models import Group
 class IssueInsight(models.Model):
     """Cached LLM analysis of an issue (latest row wins)."""
 
+    id: int
+    group_id: int
+
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="insights")
     provider = models.CharField(max_length=32)
     model = models.CharField(max_length=128)
