@@ -6,7 +6,7 @@ Legend: ☐ todo · ◐ in progress · ☑ done
 
 ---
 
-## Phase 1 — Core error tracker
+## Phase 1: Core error tracker
 
 **Target:** a complete, Sentry-SDK-compatible error tracker running with `docker compose up`.
 
@@ -14,9 +14,9 @@ Legend: ☐ todo · ◐ in progress · ☑ done
 - ☑ Repo layout: `backend/`, `frontend/`, `demo/`, `loadtest/`
 - ☑ `docker-compose.yml`: postgres, redis, web, worker, buggy-shop-api with health checks; `ai` profile; multi-arch images
 - ☑ `.gitattributes` (LF line endings), `.python-version` (3.12), Django 5.2 LTS
-- ◐ Cross-platform: verified on Windows; Linux/macOS are covered by the CI matrix once pushed
+- ◐ Cross-platform: verified on Windows; start/stop/check scripts for macOS, Linux and Windows
 - ☑ Django project on ASGI, settings from environment, `.env.example`, `/api/0/health/`
-- ☑ CI: backend (ruff, mypy, pytest) and frontend (oxlint, tsc, vitest, build) on Linux/Windows/macOS; compose smoke test + 300-event end-to-end check
+- ☑ CI pipeline runs locally via `scripts/check` (16 checks: lint, types, tests, builds, compose smoke test, 300-event end-to-end check, production image); GitHub workflow kept as a manual trigger
 
 ### M2. Tenancy and auth
 - ☑ Custom `User`, `Organization`, `OrganizationMember` (owner/admin/member), `Project`, `ProjectKey`
@@ -79,7 +79,7 @@ Legend: ☐ todo · ◐ in progress · ☑ done
 
 ---
 
-## Phase 2 — Sentry-style pipeline
+## Phase 2: Sentry-style pipeline
 
 - ☐ `full` compose profile: Kafka (KRaft) + ClickHouse
 - ☐ Redis count buffer + batched flush (replace atomic updates), with before/after load-test numbers
@@ -91,7 +91,7 @@ Legend: ☐ todo · ◐ in progress · ☑ done
 - ☐ Stats + search endpoints backed by ClickHouse
 - ☐ Benchmark: Celery vs Kafka pipeline
 
-## Phase 3 — Edge and symbolication
+## Phase 3: Edge and symbolication
 
 - ☐ `relay/` Rust (axum) ingest: auth, rate limits, envelope parsing, Kafka produce
 - ☐ Black-box ingest test suite run against Django and Rust

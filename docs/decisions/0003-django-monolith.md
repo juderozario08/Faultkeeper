@@ -13,5 +13,5 @@ Sentry's core is a Python/Django monolith. Faultkeeper needs an ORM with migrati
 - Session authentication + CSRF for the dashboard (same-origin through the Vite proxy). DSN keys for ingest.
 
 ## Consequences
-- Ingest runs in the same process as the API in phases 1–2. It must stay thin (auth → limit → parse → enqueue) so the Rust edge can replace it in phase 3.
+- Ingest runs in the same process as the API in phases 1 and 2. It must stay thin (auth → limit → parse → enqueue) so the Rust edge can replace it in phase 3.
 - App boundaries mirror Sentry's concepts, so code is easy to find.

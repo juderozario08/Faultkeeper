@@ -32,7 +32,7 @@ This document is the source of truth for how Faultkeeper is built. If code and t
                  │ POST /api/<project_id>/envelope/   (also legacy /store/)
                  ▼
  ┌───────────────────────────────┐
- │ INGEST EDGE   ("Relay")       │  P1–2: backend/ingest (Django view)
+ │ INGEST EDGE   ("Relay")       │  P1-2: backend/ingest (Django view)
  │  1. authenticate DSN key      │  P3:   relay/ (Rust, axum) in front
  │  2. rate-limit per key        │
  │  3. size-limit, parse envelope│
@@ -73,16 +73,16 @@ This document is the source of truth for how Faultkeeper is built. If code and t
 | Component | Code location | Technology | Sentry equivalent | Phase |
 |---|---|---|---|---|
 | SDKs | official SDKs; `sdk/faultkeeper-js` after the course | TypeScript | Sentry SDKs | 1 / later |
-| Demo apps | `demo/buggy-shop` (browser) + `demo/buggy-shop-api` (Python) | React + `@sentry/browser`; Flask/FastAPI + `sentry-sdk` | — | 1 |
+| Demo apps | `demo/buggy-shop` (browser) + `demo/buggy-shop-api` (Python) | React + `@sentry/browser`; Flask/FastAPI + `sentry-sdk` | n/a | 1 |
 | Ingest edge | `backend/ingest` → `relay/` | Django view → Rust/axum | Relay | 1 → 3 |
 | Event bus | Celery broker → Kafka | Redis → Kafka (KRaft) | Kafka | 1 → 2 |
 | Event pipeline | `backend/processing` | Celery workers | ingest consumers + `save_event` | 1 |
 | Metadata DB | `backend/*/models.py` | PostgreSQL 16 | Postgres | 1 |
 | Event payload store | `backend/issues` (`Event` model) | Postgres JSONB | Nodestore | 1 |
 | Analytics store | `backend/snuba_lite` | ClickHouse | ClickHouse + Snuba | 2 |
-| Cache / limits / buffers | — | Redis 7 | Redis / Memcached | 1 |
+| Cache / limits / buffers | n/a | Redis 7 | Redis / Memcached | 1 |
 | Web API | `backend/issues`, `backend/organizations` | Django + DRF | Django monolith | 1 |
-| Realtime | `backend/realtime` | Django Channels | — (Sentry polls) | 1 |
+| Realtime | `backend/realtime` | Django Channels | n/a (Sentry polls) | 1 |
 | Issue Insights | `backend/insights` | provider interface → Ollama / Gemini | Seer | 1 |
 | Source maps | `backend/processing/symbolication` | Python | Symbolicator | 3 |
 | Dashboard | `frontend/` | React, TS, Vite, Emotion, ECharts | Sentry frontend | 1 |
@@ -265,13 +265,13 @@ Must run identically on **macOS (Apple Silicon)** and **Windows**.
 | Service | Runs in | Port | Compose profile |
 |---|---|---|---|
 | `web` (Django, ASGI/uvicorn) | Docker | 8000 | default |
-| `worker` (Celery worker + beat) | Docker (Celery doesn't support Windows natively) | — | default |
+| `worker` (Celery worker + beat) | Docker (Celery doesn't support Windows natively) | n/a | default |
 | `postgres` | Docker, postgres:16 | 5432 | default |
 | `redis` | Docker, redis:7 | 6379 | default |
 | `buggy-shop-api` (Flask/FastAPI + `sentry-sdk`) | Docker | 5175 | default |
-| `frontend` (Vite dev server) | **native Node** | 5173 | — |
-| `buggy-shop` (Vite dev server) | **native Node** | 5174 | — |
-| Ollama | **native app** | 11434 | — (`ai` profile for Linux/NVIDIA) |
+| `frontend` (Vite dev server) | **native Node** | 5173 | n/a |
+| `buggy-shop` (Vite dev server) | **native Node** | 5174 | n/a |
+| Ollama | **native app** | 11434 | n/a (`ai` profile for Linux/NVIDIA) |
 | `kafka` (apache/kafka, KRaft) | Docker | 9092 | `full` |
 | `clickhouse` | Docker | 8123 / 9000 | `full` |
 | `relay` *(phase 3)* | Docker, Rust binary | 3000 | `full` |

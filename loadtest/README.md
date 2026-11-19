@@ -23,8 +23,8 @@ Environment: development stack (`docker compose up`; uvicorn with `--reload`, `D
 
 | Change | Ingest throughput | Ingest p50 / p99 | Processing throughput | Issues created |
 |---|---|---|---|---|
-| Baseline: sync ingest view, 2 workers (from host) | 88 ev/s | 172 / 368 ms | — | 25 ✓ |
-| Async ingest + native asyncio Redis (from host) | 172 ev/s | 79 / 236 ms | — | 25 ✓ |
+| Baseline: sync ingest view, 2 workers (from host) | 88 ev/s | 172 / 368 ms | n/a | 25 ✓ |
+| Async ingest + native asyncio Redis (from host) | 172 ev/s | 79 / 236 ms | n/a | 25 ✓ |
 | Async ingest, measured inside the compose network | 205 ev/s | 77 / 120 ms | 81 ev/s (2 workers) | 25 ✓ |
 | + 4 Celery worker processes | 191 ev/s | 82 / 134 ms | **150 ev/s** | 25 ✓ |
 

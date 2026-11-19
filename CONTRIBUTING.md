@@ -8,7 +8,7 @@
 
 ## Workflow
 - Branch from `main`: `feat/<short-name>`, `fix/<short-name>`, `docs/<short-name>`, `chore/<short-name>`.
-- Small, focused commits. Each one should leave the tree green.
+- Small, focused commits. Each one should leave the tree green (`./scripts/check.sh --quick`).
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/):
   ```
   feat(ingest): parse envelopes without item length
@@ -38,6 +38,7 @@
 - `cargo fmt`, `cargo clippy -- -D warnings`, `cargo test`.
 
 ## Running checks locally
+Everything CI runs, in one command: `./scripts/check.sh` (`scripts\check.cmd` on Windows). Use `--quick` to skip the Docker steps. Individual commands:
 ```bash
 # backend
 cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy . && uv run pytest

@@ -1,8 +1,8 @@
 # Faultkeeper
 
-**Self-hosted, real-time error monitoring platform — drop-in compatible with the official Sentry SDKs.**
+**Self-hosted, real-time error monitoring platform, drop-in compatible with the official Sentry SDKs.**
 
-Faultkeeper captures crashes and exceptions from your applications, groups duplicates into issues, streams them to a live dashboard, and helps you understand *why* they happened. Point any official Sentry SDK at a Faultkeeper DSN and it just works — no custom client required.
+Faultkeeper captures crashes and exceptions from your applications, groups duplicates into issues, streams them to a live dashboard, and helps you understand *why* they happened. Point any official Sentry SDK at a Faultkeeper DSN and it just works, with no custom client required.
 
 ![Issue list with live updates (Tokyo Night dark theme)](docs/images/issues-dark.png)
 
@@ -18,20 +18,20 @@ Faultkeeper captures crashes and exceptions from your applications, groups dupli
 
 | | Feature | Phase |
 |---|---|---|
-| 🔌 | **Sentry SDK compatible** — accepts the Sentry envelope protocol (`@sentry/browser`, `sentry-sdk` for Python, and more) | 1 |
-| 🧬 | **Smart grouping** — stack-trace fingerprinting collapses thousands of identical events into one issue | 1 |
-| ⚡ | **Real-time dashboard** — new issues and event counts appear instantly over WebSockets | 1 |
-| 🧭 | **Rich context** — stack traces, breadcrumbs, tags, release, environment, browser/OS | 1 |
+| 🔌 | **Sentry SDK compatible**: accepts the Sentry envelope protocol (`@sentry/browser`, `sentry-sdk` for Python, and more) | 1 |
+| 🧬 | **Smart grouping**: stack-trace fingerprinting collapses thousands of identical events into one issue | 1 |
+| ⚡ | **Real-time dashboard**: new issues and event counts appear instantly over WebSockets | 1 |
+| 🧭 | **Rich context**: stack traces, breadcrumbs, tags, release, environment, browser/OS | 1 |
 | 🛡️ | **Per-project rate limiting** and DSN key authentication at the ingest edge | 1 |
 | 👥 | **Organizations, projects, and role-based access** (owner / admin / member) | 1 |
 | 🌗 | **Light & dark themes**: Tokyo Night dark, Tokyo Night Day light, follows your OS | 1 |
-| 💡 | **Issue Insights** — LLM-generated root-cause analysis and suggested fixes, using a local model by default | 1 |
-| 🧪 | **Demo apps** — a buggy storefront (`@sentry/browser`) and API (`sentry-sdk` for Python) | 1 |
+| 💡 | **Issue Insights**: LLM-generated root-cause analysis and suggested fixes, using a local model by default | 1 |
+| 🧪 | **Demo apps**: a buggy storefront (`@sentry/browser`) and API (`sentry-sdk` for Python) | 1 |
 | 📦 | **Lightweight first-party SDK** (`faultkeeper-js`) written in TypeScript | 2 |
 | 🚚 | **Kafka event pipeline** between ingestion and processing | 2 |
-| 📈 | **ClickHouse analytics** — fast search and time-series charts over millions of events | 2 |
+| 📈 | **ClickHouse analytics**: fast search and time-series charts over millions of events | 2 |
 | 🦀 | **Rust ingest edge** (`relay/`) for high-throughput validation and rate limiting | 3 |
-| 🗺️ | **Source map support** — un-minify JavaScript stack traces | 3 |
+| 🗺️ | **Source map support**: un-minify JavaScript stack traces | 3 |
 
 ## Architecture at a glance
 
@@ -70,20 +70,22 @@ Full details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
 ## Quick start
 
-> Requires Docker Desktop and Node.js. Works on macOS (Apple Silicon) and Windows. Everything runs locally and costs nothing.
+> Requires Docker Desktop and Node.js 20+. Works on macOS, Linux and Windows. Everything runs locally and costs nothing.
 
 ```bash
 git clone https://github.com/juderozario08/Faultkeeper.git
 cd Faultkeeper
-cp .env.example .env
-docker compose up --build          # API, workers, Postgres, Redis, demo API
-
-# in two more terminals
-cd frontend && npm install && npm run dev
-cd demo/buggy-shop && npm install && npm run dev
+./scripts/start.sh        # macOS / Linux
+scripts\start.cmd         # Windows (or double-click it)
 ```
 
-Optional: install [Ollama](https://ollama.com) natively to enable Issue Insights (GPU-accelerated on Apple Silicon and Windows).
+The start script checks prerequisites, starts Docker if needed, installs dependencies on the first run, starts the backend stack, launches the dashboard and the demo shop, and opens them in your browser. Stop everything with `./scripts/stop.sh` (`scripts\stop.cmd` on Windows); your data is kept.
+
+| Option | Effect |
+|---|---|
+| `--ai` / `-Ai` | also run Ollama in Docker and pull the Insights model |
+| `--reset` / `-Reset` | clear demo issues after starting |
+| `--no-open` / `-NoOpen` | don't open the browser |
 
 | Service | URL |
 |---|---|
@@ -93,6 +95,18 @@ Optional: install [Ollama](https://ollama.com) natively to enable Issue Insights
 | Demo API | http://localhost:5175 |
 
 Sign in with `admin@faultkeeper.local` / `faultkeeper` (local demo account created by `seed_demo`). Reset demo data any time with `docker compose exec web python manage.py reset_demo`.
+
+Optional: install [Ollama](https://ollama.com) natively to enable Issue Insights (GPU-accelerated on Apple Silicon and Windows).
+
+## Checks
+
+Run the whole CI pipeline locally: lint, type checks, 80+ backend and 60+ frontend tests, builds, a Docker smoke test, an end-to-end ingest check (300 events must group into exactly 7 issues), and the production image build.
+
+```bash
+./scripts/check.sh              # macOS / Linux   (scripts\check.cmd on Windows)
+./scripts/check.sh --quick      # skip the Docker steps
+./scripts/check.sh --install-hook   # run the quick checks before every git push
+```
 
 Run the full Sentry-style pipeline (Kafka + ClickHouse):
 
@@ -145,12 +159,12 @@ docs/               Architecture, protocol, decisions, roadmap
 
 ## Documentation
 
-- [Architecture](docs/ARCHITECTURE.md) — components, data flow, data model, API
-- [Ingest protocol](docs/PROTOCOL.md) — the subset of the Sentry envelope protocol Faultkeeper accepts
-- [Architecture Decision Records](docs/decisions/) — why things are the way they are
-- [Roadmap](docs/ROADMAP.md) — phases and progress
-- [Glossary](docs/GLOSSARY.md) — events, issues, fingerprints, envelopes, DSNs…
-- [Contributing](CONTRIBUTING.md) — conventions, workflow, testing
+- [Architecture](docs/ARCHITECTURE.md): components, data flow, data model, API
+- [Ingest protocol](docs/PROTOCOL.md): the subset of the Sentry envelope protocol Faultkeeper accepts
+- [Architecture Decision Records](docs/decisions/): why things are the way they are
+- [Roadmap](docs/ROADMAP.md): phases and progress
+- [Glossary](docs/GLOSSARY.md): events, issues, fingerprints, envelopes, DSNs…
+- [Contributing](CONTRIBUTING.md): conventions, workflow, testing
 
 ## Benchmarks
 

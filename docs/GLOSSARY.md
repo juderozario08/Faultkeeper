@@ -11,7 +11,7 @@ Faultkeeper uses the same vocabulary as Sentry wherever possible.
 | **Grouping config** | A versioned set of fingerprinting rules (`GROUPING_CONFIG`). |
 | **Envelope** | The newline-delimited container format SDKs use to send one or more items (events, sessions, attachments…). |
 | **Item** | One entry inside an envelope, with its own header (`type`, `length`). |
-| **DSN** | Data Source Name — `scheme://public_key@host/project_id`. Tells an SDK where to send events and which key to use. |
+| **DSN** | Data Source Name: `scheme://public_key@host/project_id`. Tells an SDK where to send events and which key to use. |
 | **Public key / ProjectKey** | The key embedded in a DSN; identifies and authorizes a project for ingest. |
 | **Ingest edge / Relay** | The first server component events hit: authenticates, rate-limits, validates, and enqueues. |
 | **Event bus** | Transport between ingest and processing: Celery/Redis (phase 1), Kafka (phase 2). |

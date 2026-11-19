@@ -34,13 +34,13 @@ ENVIRONMENTS = ["production", "production", "production", "staging"]
 BROWSERS = ["Chrome 130", "Firefox 132", "Safari 18", "Edge 130"]
 
 
-def make_bug(index: int) -> dict:
+def make_bug(index: int, run_id: str) -> dict:
     module = MODULES[index % len(MODULES)]
     return {
         "type": EXCEPTION_TYPES[index % len(EXCEPTION_TYPES)],
         "module": module,
-        "function": f"handler_{index}",
-        "value": f"failure #{index} for order {{order}}",
+        "function": f"handler_{index}_{run_id}",
+        "value": f"failure #{index} [{run_id}] for order {{order}}",
     }
 
 
@@ -140,18 +140,21 @@ def api_session(base: str, email: str, password: str) -> urllib.request.OpenerDi
     return opener
 
 
-def processed_totals(opener: urllib.request.OpenerDirector, base: str, project: str) -> tuple[int, int]:
-    url = f"{base}/api/0/projects/{project}/issues/?status=all&limit=100"
+def processed_totals(
+    opener: urllib.request.OpenerDirector, base: str, project: str, run_id: str
+) -> tuple[int, int]:
+    """Issues and events created by this run (bugs carry the run id in their title)."""
+    url = f"{base}/api/0/projects/{project}/issues/?status=all&limit=100&q={run_id}"
     issues = json.loads(opener.open(url).read())["results"]
     return len(issues), sum(i["times_seen"] for i in issues)
 
 
-def wait_for_processing(opener, base: str, project: str, before: int, accepted: int, timeout: float) -> dict:
+def wait_for_processing(opener, base: str, project: str, run_id: str, accepted: int, timeout: float) -> dict:
     deadline = time.time() + timeout
     while True:
-        issues, seen = processed_totals(opener, base, project)
-        if seen - before >= accepted or time.time() > deadline:
-            return {"issues_in_project": issues, "events_processed": seen - before}
+        issues, seen = processed_totals(opener, base, project, run_id)
+        if seen >= accepted or time.time() > deadline:
+            return {"issues_created": issues, "events_processed": seen}
         time.sleep(0.5)
 
 
@@ -167,9 +170,15 @@ def main() -> None:
     parser.add_argument("--email", default="admin@faultkeeper.local")
     parser.add_argument("--password", default="faultkeeper")
     parser.add_argument("--json", dest="json_out", help="write results to this file")
+    parser.add_argument(
+        "--expect-exact",
+        action="store_true",
+        help="with --verify: exit 1 unless every event was accepted and grouped into exactly --bugs issues",
+    )
     args = parser.parse_args()
 
-    bugs = [make_bug(i) for i in range(args.bugs)]
+    run_id = uuid.uuid4().hex[:8]
+    bugs = [make_bug(i, run_id) for i in range(args.bugs)]
     now = time.time()
     bodies = [
         envelope(make_event(random.choice(bugs), now - random.random() * args.backdate_hours * 3600))
@@ -179,7 +188,6 @@ def main() -> None:
     parts = urlsplit(args.dsn)
     base = f"{parts.scheme}://{parts.hostname}:{parts.port or 80}"
     opener = api_session(base, args.email, args.password) if args.verify else None
-    before = processed_totals(opener, base, args.project)[1] if opener else 0
     statuses: dict[int, int] = {}
     latencies: list[float] = []
     lock = threading.Lock()
@@ -210,8 +218,9 @@ def main() -> None:
         "status_codes": statuses,
     }
     if opener:
+        results["run_id"] = run_id
         results["processing"] = wait_for_processing(
-            opener, base, args.project, before, statuses.get(200, 0), timeout=600
+            opener, base, args.project, run_id, statuses.get(200, 0), timeout=600
         )
         # Ingest and processing run concurrently; this is when the last event was grouped.
         total = time.perf_counter() - started
@@ -224,6 +233,16 @@ def main() -> None:
     if args.json_out:
         with open(args.json_out, "w", encoding="utf-8") as fh:
             json.dump(results, fh, indent=2)
+
+    if args.expect_exact:
+        processing = results.get("processing", {})
+        ok = (
+            statuses == {200: args.events}
+            and processing.get("events_processed") == args.events
+            and processing.get("issues_created") == args.bugs
+        )
+        print("E2E CHECK:", "PASS" if ok else "FAIL")
+        raise SystemExit(0 if ok else 1)
 
 
 if __name__ == "__main__":

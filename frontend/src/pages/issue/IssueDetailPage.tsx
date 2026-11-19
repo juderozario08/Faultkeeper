@@ -135,7 +135,7 @@ export function IssueDetailPage() {
           </div>
           <div>
             <StatLabel>First release</StatLabel>
-            <StatValue>{group.first_release ?? "—"}</StatValue>
+            <StatValue>{group.first_release ?? "None"}</StatValue>
           </div>
         </Stats>
       </Panel>

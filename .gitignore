@@ -43,3 +43,6 @@ celerybeat-schedule*
 
 # Load-test output (curated summaries are committed explicitly)
 loadtest/results/ci.json
+
+# Local run state (PIDs, dev-server logs)
+.run/

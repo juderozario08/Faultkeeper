@@ -37,7 +37,7 @@ function renderCart() {
   for (const line of cart) {
     const product = products.find((p) => p.id === line.id)!;
     const li = document.createElement("li");
-    li.textContent = `${line.qty} × ${product.name} — $${(product.price * line.qty).toFixed(2)}`;
+    li.textContent = `${line.qty} × ${product.name}: $${(product.price * line.qty).toFixed(2)}`;
     list.append(li);
   }
 }
@@ -127,7 +127,7 @@ $("#checkout").addEventListener("click", async () => {
     const order = await postCheckout({ cart, coupon: $<HTMLInputElement>("#coupon").value.trim() || undefined });
     cart.length = 0;
     renderCart();
-    setStatus(`Order #${order.order_id} placed — total $${order.total.toFixed(2)}`);
+    setStatus(`Order #${order.order_id} placed, total $${order.total.toFixed(2)}`);
   } catch (error) {
     Sentry.captureException(error);
     setStatus((error as Error).message, "error");
@@ -135,6 +135,6 @@ $("#checkout").addEventListener("click", async () => {
 });
 
 loadProducts().catch((error) => {
-  setStatus("Could not reach the Buggy Shop API on :5175 — is docker compose running?", "error");
+  setStatus("Could not reach the Buggy Shop API on :5175. Is docker compose running?", "error");
   Sentry.captureException(error);
 });

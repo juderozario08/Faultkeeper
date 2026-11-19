@@ -191,7 +191,7 @@ export function IssuesPage() {
         <PanelHeader>
           <span>Events in the last 24 hours</span>
           <LiveDot state={stream} aria-live="polite">
-            {stream === "live" ? "Live" : stream === "connecting" ? "Connecting…" : "Offline — retrying"}
+            {stream === "live" ? "Live" : stream === "connecting" ? "Connecting…" : "Offline, retrying"}
           </LiveDot>
         </PanelHeader>
         <PanelBody style={{ paddingTop: 4, paddingBottom: 4 }}>

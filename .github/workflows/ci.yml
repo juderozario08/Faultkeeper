@@ -1,9 +1,9 @@
 name: CI
 
+# Manual trigger only: the same pipeline runs locally with scripts/check.sh (or
+# scripts\check.cmd on Windows). Re-enable push/pull_request triggers when wanted.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   backend:
@@ -67,8 +67,7 @@ jobs:
         run: |
           docker compose run --rm --no-deps -v "$PWD/loadtest:/lt" web \
             python /lt/send_events.py --dsn http://79a635b512d79894d720b95fbdad5008@web:8000/3 \
-            --events 300 --bugs 7 --concurrency 8 --verify --json /lt/results/ci.json
-          python3 -c "import json,sys; r=json.load(open('loadtest/results/ci.json')); p=r['processing']; assert r['status_codes']=={'200':300}, r; assert p['events_processed']>=300 and p['issues_in_project']==7, r; print('ok', p)"
+            --events 300 --bugs 7 --concurrency 8 --verify --expect-exact
       - name: Build the production image (API + pipeline + dashboard)
         run: docker build -t faultkeeper:ci .
       - if: failure()
