@@ -1,0 +1,49 @@
+[project]
+name = "faultkeeper-backend"
+version = "0.1.0"
+description = "Faultkeeper API, ingest, and event processing"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "django>=5.2,<5.3",
+    "djangorestframework>=3.15",
+    "channels>=4.1",
+    "channels-redis>=4.2",
+    "celery[redis]>=5.4",
+    "redis>=5.0",
+    "psycopg[binary]>=3.2",
+    "dj-database-url>=2.2",
+    "uvicorn[standard]>=0.30",
+    "whitenoise>=6.7",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-django>=4.9",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "django-stubs[compatible-mypy]>=5.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "faultkeeper.settings_test"
+python_files = ["test_*.py"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["mypy_django_plugin.main"]
+ignore_missing_imports = true
+
+[tool.django-stubs]
+django_settings_module = "faultkeeper.settings_test"

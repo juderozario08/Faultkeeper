@@ -1,0 +1,68 @@
+# Core stack. Runs on Linux, Windows, and macOS (amd64 + arm64 images only).
+#   docker compose up --build
+# Vite apps (frontend/, demo/buggy-shop/) run natively with Node; Ollama runs natively.
+# Later stories add profiles: `full` (Kafka + ClickHouse) and `ai` (containerised Ollama).
+
+x-backend: &backend
+  build: ./backend
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    DATABASE_URL: postgres://faultkeeper:faultkeeper@postgres:5432/faultkeeper
+    REDIS_URL: redis://redis:6379/0
+    OLLAMA_URL: http://host.docker.internal:11434
+  extra_hosts:
+    - "host.docker.internal:host-gateway" # Linux; built in on Docker Desktop
+  volumes:
+    - ./backend:/app
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: faultkeeper
+      POSTGRES_PASSWORD: faultkeeper
+      POSTGRES_DB: faultkeeper
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U faultkeeper"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  web:
+    <<: *backend
+    command: ["sh", "-c", "python manage.py migrate --noinput && exec uvicorn faultkeeper.asgi:application --host 0.0.0.0 --port 8000 --reload --reload-dir /app"]
+    environment:
+      DATABASE_URL: postgres://faultkeeper:faultkeeper@postgres:5432/faultkeeper
+      REDIS_URL: redis://redis:6379/0
+      OLLAMA_URL: http://host.docker.internal:11434
+      WATCHFILES_FORCE_POLLING: "true" # file events don't cross Windows bind mounts
+    ports:
+      - "8000:8000"
+
+  worker:
+    <<: *backend
+    command: celery -A faultkeeper worker --beat --loglevel=info --concurrency=2
+
+volumes:
+  postgres-data:
