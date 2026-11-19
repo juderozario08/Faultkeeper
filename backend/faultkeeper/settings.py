@@ -43,7 +43,13 @@ INSTALLED_APPS = [
     "rest_framework",
     "channels",
     "core",
+    "organizations",
 ]
+
+AUTH_USER_MODEL = "organizations.User"
+
+# Public base URL that SDKs use; DSNs are built from it.
+FAULTKEEPER_PUBLIC_URL = os.environ.get("FAULTKEEPER_PUBLIC_URL", "http://localhost:8000")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -84,7 +90,7 @@ DATABASES = {
 CACHES: dict[str, dict[str, Any]]
 CHANNEL_LAYERS: dict[str, dict[str, Any]]
 if DEPLOY_MODE == "single":
-    CACHES ={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
     CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 else:
     CACHES = {

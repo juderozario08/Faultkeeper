@@ -51,7 +51,7 @@ services:
 
   web:
     <<: *backend
-    command: ["sh", "-c", "python manage.py migrate --noinput && exec uvicorn faultkeeper.asgi:application --host 0.0.0.0 --port 8000 --reload --reload-dir /app"]
+    command: ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_demo && exec uvicorn faultkeeper.asgi:application --host 0.0.0.0 --port 8000 --reload --reload-dir /app"]
     environment:
       DATABASE_URL: postgres://faultkeeper:faultkeeper@postgres:5432/faultkeeper
       REDIS_URL: redis://redis:6379/0
