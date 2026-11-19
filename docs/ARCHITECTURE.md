@@ -303,7 +303,7 @@ Free-tier limits change, so check them at deploy time ([ADR 0007](decisions/0007
 ## 10. Quality and observability
 
 - **Backend:** pytest (+ pytest-django), ruff (lint + format), mypy.
-- **Frontend:** Vitest, ESLint, `tsc --noEmit`.
+- **Frontend:** Vitest, oxlint, `tsc -b`.
 - **CI:** GitHub Actions runs every check on each push and PR.
 - **Tests that must exist:** envelope parsing (fixtures captured from real SDKs), fingerprint stability (same bug → same hash; different bug → different hash), rate limiting, the grouping race, API permissions.
 - **Load testing:** `loadtest/` sends N events across M distinct bugs and reports throughput, p50/p99 ingest latency and the issue count. Results go in the README.

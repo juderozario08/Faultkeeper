@@ -32,7 +32,7 @@
 - Strict TypeScript, no `any` without a comment explaining why.
 - Server state through TanStack Query; no ad-hoc fetching in components.
 - Styling with Emotion; shared primitives in `frontend/src/components`.
-- `eslint`, `tsc --noEmit`, `vitest`.
+- `oxlint`, `tsc -b`, `vitest`.
 
 ### Rust (`relay/`)
 - `cargo fmt`, `cargo clippy -- -D warnings`, `cargo test`.
@@ -42,7 +42,7 @@
 # backend
 cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy . && uv run pytest
 # frontend
-cd frontend && npm run lint && npm run typecheck && npm test
+cd frontend && npm run lint && npm run typecheck && npm test && npm run build
 ```
 
 ## Security and privacy

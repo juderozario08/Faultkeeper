@@ -7,7 +7,7 @@ Sentry's UI is React + TypeScript, styled with Emotion, with charts in ECharts. 
 
 ## Decision
 - React + TypeScript + Vite, React Router, TanStack Query for server state, Emotion for styling, ECharts for charts.
-- Vitest + React Testing Library; ESLint; `tsc --noEmit` in CI.
+- Vitest + React Testing Library; oxlint (the Vite template default, ESLint-compatible and much faster); `tsc -b` in CI.
 - **Vite apps run natively with Node, not in Docker.** File watching over bind mounts is unreliable on Windows, and `node_modules` access through Docker is slow on macOS and Windows.
 - In development, Vite proxies `/api` and `/ws` to Django so the session cookie stays on the same origin. In the hosted build, Django serves the built dashboard itself ([ADR 0007](0007-zero-cost-infrastructure.md)).
 - **Demo apps:**
