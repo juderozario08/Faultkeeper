@@ -1,3 +1,5 @@
+from typing import Any, cast
+
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import ensure_csrf_cookie
 from rest_framework import status
@@ -6,7 +8,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from .models import OrganizationMember, Project
+from .models import OrganizationMember, Project, User
 from .permissions import get_member, get_project, organizations_for
 from .serializers import (
     OrganizationSerializer,
@@ -14,6 +16,11 @@ from .serializers import (
     ProjectSerializer,
     UserSerializer,
 )
+
+
+def current_user(request: Request) -> User:
+    """Views behind IsAuthenticated always have a real User."""
+    return cast(User, request.user)
 
 
 @api_view(["GET"])
@@ -27,10 +34,11 @@ def csrf(request: Request) -> Response:
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def login_view(request: Request) -> Response:
+    data: dict[str, Any] = request.data if isinstance(request.data, dict) else {}
     user = authenticate(
         request._request,
-        username=str(request.data.get("email", "")).lower(),
-        password=str(request.data.get("password", "")),
+        username=str(data.get("email", "")).lower(),
+        password=str(data.get("password", "")),
     )
     if user is None:
         return Response({"detail": "Invalid email or password."}, status=400)
@@ -46,18 +54,18 @@ def logout_view(request: Request) -> Response:
 
 @api_view(["GET"])
 def me(request: Request) -> Response:
-    return Response(UserSerializer(request.user).data)
+    return Response(UserSerializer(current_user(request)).data)
 
 
 @api_view(["GET"])
 def organization_list(request: Request) -> Response:
-    orgs = organizations_for(request.user).order_by("name")  # type: ignore[arg-type]
+    orgs = organizations_for(current_user(request)).order_by("name")
     return Response(OrganizationSerializer(orgs, many=True).data)
 
 
 @api_view(["GET", "POST"])
 def project_list(request: Request, org_slug: str) -> Response:
-    member = get_member(request.user, org_slug)  # type: ignore[arg-type]
+    member = get_member(current_user(request), org_slug)
     if request.method == "POST":
         if member.role == OrganizationMember.Role.MEMBER:
             return Response({"detail": "Only owners and admins can create projects."}, status=403)
@@ -72,5 +80,5 @@ def project_list(request: Request, org_slug: str) -> Response:
 
 @api_view(["GET"])
 def project_key_list(request: Request, org_slug: str, project_slug: str) -> Response:
-    project = get_project(request.user, org_slug, project_slug)  # type: ignore[arg-type]
+    project = get_project(current_user(request), org_slug, project_slug)
     return Response(ProjectKeySerializer(project.keys.order_by("id"), many=True).data)

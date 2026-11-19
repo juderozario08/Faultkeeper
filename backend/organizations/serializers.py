@@ -16,7 +16,9 @@ class OrganizationSerializer(serializers.ModelSerializer[Organization]):
 
 
 class ProjectSerializer(serializers.ModelSerializer[Project]):
-    organization = serializers.SlugRelatedField(slug_field="slug", read_only=True)
+    organization: "serializers.SlugRelatedField[Organization]" = serializers.SlugRelatedField(
+        slug_field="slug", read_only=True
+    )
 
     class Meta:
         model = Project

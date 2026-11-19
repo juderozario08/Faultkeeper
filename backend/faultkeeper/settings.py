@@ -44,12 +44,22 @@ INSTALLED_APPS = [
     "channels",
     "core",
     "organizations",
+    "ingest",
+    "processing",
+    "issues",
+    "realtime",
 ]
 
 AUTH_USER_MODEL = "organizations.User"
 
 # Public base URL that SDKs use; DSNs are built from it.
 FAULTKEEPER_PUBLIC_URL = os.environ.get("FAULTKEEPER_PUBLIC_URL", "http://localhost:8000")
+
+# Ingest
+INGEST_MAX_BYTES = int(os.environ.get("INGEST_MAX_BYTES", 1024 * 1024))
+INGEST_CAPTURE_DIR = os.environ.get("INGEST_CAPTURE_DIR", "")  # dev aid for SDK fixtures
+DATA_UPLOAD_MAX_MEMORY_SIZE = INGEST_MAX_BYTES + 1024
+EVENT_RETENTION_DAYS = int(os.environ.get("EVENT_RETENTION_DAYS", 30))
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -107,6 +117,9 @@ CELERY_BROKER_URL = REDIS_URL
 CELERY_TASK_ALWAYS_EAGER = env_bool("CELERY_TASK_ALWAYS_EAGER", False)
 CELERY_TASK_SERIALIZER = "json"
 CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_BEAT_SCHEDULE = {
+    "cleanup-old-events": {"task": "issues.cleanup_old_events", "schedule": 60 * 60},
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},

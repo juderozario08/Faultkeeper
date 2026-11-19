@@ -78,7 +78,7 @@ This document is the source of truth for how Faultkeeper is built. If code and t
 | Event bus | Celery broker → Kafka | Redis → Kafka (KRaft) | Kafka | 1 → 2 |
 | Event pipeline | `backend/processing` | Celery workers | ingest consumers + `save_event` | 1 |
 | Metadata DB | `backend/*/models.py` | PostgreSQL 16 | Postgres | 1 |
-| Event payload store | `backend/processing` (`Event` model) | Postgres JSONB | Nodestore | 1 |
+| Event payload store | `backend/issues` (`Event` model) | Postgres JSONB | Nodestore | 1 |
 | Analytics store | `backend/snuba_lite` | ClickHouse | ClickHouse + Snuba | 2 |
 | Cache / limits / buffers | — | Redis 7 | Redis / Memcached | 1 |
 | Web API | `backend/issues`, `backend/organizations` | Django + DRF | Django monolith | 1 |
