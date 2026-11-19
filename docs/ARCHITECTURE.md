@@ -304,7 +304,7 @@ Free-tier limits change, so check them at deploy time ([ADR 0007](decisions/0007
 
 - **Backend:** pytest (+ pytest-django), ruff (lint + format), mypy.
 - **Frontend:** Vitest, oxlint, `tsc -b`.
-- **CI:** GitHub Actions runs every check on each push and PR.
+- **CI:** `scripts/check.sh` (`scripts\check.cmd` on Windows) runs every check locally: lint, types, tests, builds, a Docker smoke test, an end-to-end ingest check and the production image build. `--install-hook` runs the quick checks before each push.
 - **Tests that must exist:** envelope parsing (fixtures captured from real SDKs), fingerprint stability (same bug → same hash; different bug → different hash), rate limiting, the grouping race, API permissions.
 - **Load testing:** `loadtest/` sends N events across M distinct bugs and reports throughput, p50/p99 ingest latency and the issue count. Results go in the README.
 - **Dogfooding:** Faultkeeper's own Django backend can report errors to a Faultkeeper project.

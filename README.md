@@ -66,7 +66,7 @@ Full details: **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 | Ingest edge | Rust + axum *(phase 3)* |
 | Frontend | React, TypeScript, Vite, TanStack Query, Emotion, ECharts |
 | SDK | TypeScript |
-| Infrastructure | Docker Compose, GitHub Actions |
+| Infrastructure | Docker Compose, local check scripts |
 
 ## Quick start
 

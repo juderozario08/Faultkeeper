@@ -16,7 +16,7 @@ Legend: ☐ todo · ◐ in progress · ☑ done
 - ☑ `.gitattributes` (LF line endings), `.python-version` (3.12), Django 5.2 LTS
 - ◐ Cross-platform: verified on Windows; start/stop/check scripts for macOS, Linux and Windows
 - ☑ Django project on ASGI, settings from environment, `.env.example`, `/api/0/health/`
-- ☑ CI pipeline runs locally via `scripts/check` (16 checks: lint, types, tests, builds, compose smoke test, 300-event end-to-end check, production image); GitHub workflow kept as a manual trigger
+- ☑ CI pipeline runs locally via `scripts/check` (16 checks: lint, types, tests, builds, compose smoke test, 300-event end-to-end check, production image)
 
 ### M2. Tenancy and auth
 - ☑ Custom `User`, `Organization`, `OrganizationMember` (owner/admin/member), `Project`, `ProjectKey`

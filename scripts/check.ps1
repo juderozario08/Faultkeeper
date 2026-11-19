@@ -1,5 +1,5 @@
 <#
-Run the full CI pipeline locally on Windows (the same checks as .github/workflows/ci.yml).
+Run every check on Windows: lint, types, tests, builds, Docker smoke test, end-to-end ingest, production image.
 
   scripts\check.cmd                everything (needs Docker for the last steps)
   scripts\check.cmd -Quick         lint, types, unit tests and builds only (no Docker)

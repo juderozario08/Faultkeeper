@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the full CI pipeline locally (the same checks as .github/workflows/ci.yml).
+# Run every check: lint, types, tests, builds, Docker smoke test, end-to-end ingest, production image.
 #
 #   ./scripts/check.sh                 everything (needs Docker for the last steps)
 #   ./scripts/check.sh --quick         lint, types, unit tests and builds only (no Docker)
