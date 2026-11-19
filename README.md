@@ -4,6 +4,12 @@
 
 Faultkeeper captures crashes and exceptions from your applications, groups duplicates into issues, streams them to a live dashboard, and helps you understand *why* they happened. Point any official Sentry SDK at a Faultkeeper DSN and it just works — no custom client required.
 
+![Issue list with live updates (Tokyo Night dark theme)](docs/images/issues-dark.png)
+
+| Issue detail: stack trace with source context and locals | Issue Insights: LLM root-cause analysis |
+|---|---|
+| ![Issue detail, light theme](docs/images/issue-detail-light.png) | ![Issue Insights, dark theme](docs/images/issue-insights-dark.png) |
+
 > Status: **in active development.** See the [roadmap](docs/ROADMAP.md) for what is done and what is next.
 
 ---
@@ -84,6 +90,9 @@ Optional: install [Ollama](https://ollama.com) natively to enable Issue Insights
 | Dashboard | http://localhost:5173 |
 | API | http://localhost:8000/api/0/ |
 | Demo app ("Buggy Shop") | http://localhost:5174 |
+| Demo API | http://localhost:5175 |
+
+Sign in with `admin@faultkeeper.local` / `faultkeeper` (local demo account created by `seed_demo`). Reset demo data any time with `docker compose exec web python manage.py reset_demo`.
 
 Run the full Sentry-style pipeline (Kafka + ClickHouse):
 

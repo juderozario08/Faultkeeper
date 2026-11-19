@@ -137,6 +137,8 @@ def event_culprit(event: dict[str, Any]) -> str:
         frames = _app_frames(exc)
         if frames:
             named = [f for f in frames if f.get("function") not in (None, "", "?", "<anonymous>")]
-            frame = (named or frames)[-1]  # most recent call
-            return f"{_frame_location(frame)} in {frame.get('function') or '?'}"[:255]
+            if named:
+                frame = named[-1]  # most recent named call
+                return f"{_frame_location(frame)} in {frame['function']}"[:255]
+            return _frame_location(frames[-1])[:255]
     return str(event.get("transaction") or event.get("logger") or "")[:255]

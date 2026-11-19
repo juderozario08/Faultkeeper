@@ -133,3 +133,34 @@ def test_normalize_marks_library_frames() -> None:
     )
     frames = data["exception"]["values"][0]["stacktrace"]["frames"]
     assert [f["in_app"] for f in frames] == [False, True]
+
+
+def test_native_frames_are_never_in_app() -> None:
+    data = normalize(
+        {
+            "exception": {
+                "values": [
+                    {
+                        "type": "TypeError",
+                        "stacktrace": {
+                            "frames": [
+                                {
+                                    "filename": "http://localhost:5174/src/main.ts",
+                                    "function": "cartTotal",
+                                    "in_app": True,
+                                },
+                                {
+                                    "filename": "<anonymous>",
+                                    "function": "Array.reduce",
+                                    "in_app": True,
+                                },
+                            ]
+                        },
+                    }
+                ]
+            }
+        },
+        NOW,
+    )
+    frames = data["exception"]["values"][0]["stacktrace"]["frames"]
+    assert [f["in_app"] for f in frames] == [True, False]

@@ -10,6 +10,8 @@ MAX_BREADCRUMBS = 100
 MAX_FRAMES = 250
 SENSITIVE_HEADERS = {"authorization", "cookie", "set-cookie", "x-api-key", "proxy-authorization"}
 LIBRARY_MARKERS = ("node_modules", "site-packages", "dist-packages", "/usr/lib/python")
+# Engine-internal JS frames (e.g. `Array.reduce`), which SDKs sometimes mark in-app.
+NATIVE_FILENAMES = {"<anonymous>", "native", "[native code]", "<native>"}
 
 
 def _trim(value: Any, limit: int = MAX_STRING) -> Any:
@@ -59,7 +61,9 @@ def _normalize_frames(frames: list[dict[str, Any]]) -> list[dict[str, Any]]:
     out = []
     for frame in frames[-MAX_FRAMES:]:
         frame = {k: _trim(v) for k, v in frame.items()}
-        if not isinstance(frame.get("in_app"), bool):
+        if str(frame.get("filename") or frame.get("abs_path") or "") in NATIVE_FILENAMES:
+            frame["in_app"] = False
+        elif not isinstance(frame.get("in_app"), bool):
             frame["in_app"] = _default_in_app(frame)
         out.append(frame)
     return out

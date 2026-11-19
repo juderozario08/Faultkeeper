@@ -185,3 +185,8 @@ def test_culprit_prefers_named_function() -> None:
         ]
     )
     assert event_culprit(event) == "src/main.ts in cartTotal"
+
+
+def test_culprit_without_named_frames_is_location_only() -> None:
+    event = exc_event(frames=[{"filename": "src/main.ts", "function": "?", "in_app": True}])
+    assert event_culprit(event) == "src/main.ts"

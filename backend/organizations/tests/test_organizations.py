@@ -92,3 +92,19 @@ def test_seed_demo_is_idempotent() -> None:
     assert User.objects.count() == 1
     assert Project.objects.filter(organization__slug="demo").count() == 3
     assert ProjectKey.objects.count() == 3
+
+
+@pytest.mark.django_db
+def test_reset_demo_keeps_projects_and_keys() -> None:
+    from datetime import UTC, datetime
+
+    from issues.models import Event, Group
+    from processing.pipeline import process_event
+
+    call_command("seed_demo")
+    project = Project.objects.get(slug="buggy-shop")
+    process_event(project.id, {"message": "hello"}, datetime.now(UTC).isoformat())
+    assert Group.objects.count() == 1
+    call_command("reset_demo")
+    assert Group.objects.count() == 0 and Event.objects.count() == 0
+    assert ProjectKey.objects.count() == 3
